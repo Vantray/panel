@@ -1,0 +1,171 @@
+name: Bug report
+description: Report a problem with Vantray
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Before submitting, please:
+        - Search [existing issues](https://github.com/Vantray/panel/issues) to make sure this hasn't been reported already.
+        - Make sure you are running the latest version.
+        - **Remove all sensitive data** (server IPs, domains, passwords, tokens, keys, user links) from logs and screenshots.
+
+        For security vulnerabilities, do **not** open a public issue. Use the private vulnerability reporting option in the Security tab instead.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I have searched existing issues and this bug has not been reported yet.
+          required: true
+        - label: I am using the latest version of Vantray, or I have noted my version below.
+          required: true
+        - label: I have removed all sensitive data from logs and screenshots.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: When I do X, Y happens instead of Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps that lead to the problem.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include error messages if any.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Vantray version
+      description: Shown in the panel footer, or run `vantray version`.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Installation method
+      options:
+        - Install script
+        - Docker (docker compose)
+        - Manual installation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - SQLite
+        - MySQL
+        - MariaDB
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Server operating system
+      placeholder: Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: input
+    id: xray-version
+    attributes:
+      label: Xray-core version
+      description: Run `xray version` on the server.
+      placeholder: v25.1.1
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      multiple: true
+      options:
+        - Dashboard (web UI)
+        - REST API
+        - Subscription links
+        - Telegram bot
+        - CLI
+        - Installation script
+        - Backup service
+        - Webhooks
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Relevant logs, e.g. from `vantray logs`. Please **redact sensitive data**.
+        This will be formatted as code automatically.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: |
+        Relevant parts of your `.env` or Xray config. **Never include passwords, tokens, or private keys.**
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, drag and drop screenshots here. Blur out any sensitive information.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might help, such as client app and version, browser, or recent changes.
+    validations:
+      required: false
