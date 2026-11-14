@@ -14,7 +14,8 @@ updates:
       - "dependencies"
       - "python"
     commit-message:
-      prefix: "deps"
+      prefix: "chore"
+      include: "scope"
     groups:
       python-minor-patch:
         update-types:
@@ -34,7 +35,8 @@ updates:
       - "dependencies"
       - "frontend"
     commit-message:
-      prefix: "deps"
+      prefix: "chore"
+      include: "scope"
     groups:
       npm-minor-patch:
         update-types:
@@ -53,7 +55,8 @@ updates:
       - "dependencies"
       - "docker"
     commit-message:
-      prefix: "deps"
+      prefix: "chore"
+      include: "scope"
 
   - package-ecosystem: "github-actions"
     directory: "/"
