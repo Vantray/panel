@@ -228,4 +228,4 @@ Body:
 Распространяется под лицензией [AGPL-3.0](LICENSE).
 
 Copyright (C) 2023 Gozargah и контрибьюторы Marzban.\
-Copyright (C) 2026 lordfre.
+Copyright (C) 2026 Vantray.

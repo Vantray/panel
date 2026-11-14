@@ -227,4 +227,4 @@ Body:
 تحت مجوز [AGPL-3.0](LICENSE) منتشر شده است.
 
 Copyright (C) 2023 Gozargah و مشارکت‌کنندگان Marzban.\
-Copyright (C) 2026 lordfre.
+Copyright (C) 2026 Vantray.

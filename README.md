@@ -227,4 +227,4 @@ Contributions are welcome. Please read the [contributing guide](/CONTRIBUTING.md
 Distributed under the [AGPL-3.0](LICENSE) license.
 
 Copyright (C) 2023 Gozargah and Marzban contributors.\
-Copyright (C) 2026 lordfre.
+Copyright (C) 2026 Vantray.
