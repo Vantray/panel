@@ -59,6 +59,7 @@ body:
         - REST API
         - Subscription links
         - Telegram bot
+        - Discord bot
         - CLI
         - Installation script
         - Backup service

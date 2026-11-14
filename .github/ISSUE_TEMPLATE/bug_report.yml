@@ -31,7 +31,7 @@ body:
     id: description
     attributes:
       label: Describe the bug
-      description: A clear and concise description of what the bug is.
+      description: A clear and concise description of what happens, including any error messages.
       placeholder: When I do X, Y happens instead of Z.
     validations:
       required: true
@@ -54,14 +54,6 @@ body:
     attributes:
       label: Expected behavior
       description: What did you expect to happen?
-    validations:
-      required: true
-
-  - type: textarea
-    id: actual
-    attributes:
-      label: Actual behavior
-      description: What actually happened? Include error messages if any.
     validations:
       required: true
 
@@ -107,11 +99,20 @@ body:
       required: true
 
   - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Only for manual installation. Run `python --version`.
+      placeholder: Python 3.14
+    validations:
+      required: false
+
+  - type: input
     id: xray-version
     attributes:
       label: Xray-core version
       description: Run `xray version` on the server.
-      placeholder: v25.1.1
+      placeholder: Xray x.y.z
     validations:
       required: false
 
@@ -125,6 +126,8 @@ body:
         - REST API
         - Subscription links
         - Telegram bot
+        - Discord bot
+        - Xray core integration
         - CLI
         - Installation script
         - Backup service

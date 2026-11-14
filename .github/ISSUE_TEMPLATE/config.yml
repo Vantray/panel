@@ -3,3 +3,6 @@ contact_links:
   - name: Questions and help
     url: https://github.com/Vantray/panel/discussions
     about: Ask questions and discuss ideas here instead of opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/Vantray/panel/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.
