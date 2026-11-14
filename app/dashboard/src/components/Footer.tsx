@@ -17,7 +17,7 @@ export const Footer: FC<BoxProps> = (props) => {
         <Link color="blue.400" href={REPO_URL}>
           Vantray
         </Link>
-        {version ? ` (v${version}), `}
+        {version ? ` (v${version}) `: ""}
       </Text>
     </HStack>
   );
