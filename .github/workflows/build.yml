@@ -1,61 +1,100 @@
 name: Build
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - "v*.*.*"
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-docker-image:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 360
+    outputs:
+      image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup nodejs
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v7
         with:
-          node-version: 16.17.0
+          fetch-depth: 0
 
-      - name: Install dependencies
-        working-directory: ./app/dashboard
-        run: npm ci
-
-      - name: Build project
-        working-directory: ./app/dashboard
-        run: VITE_BASE_API=/api/ npm run build --if-present -- --outDir build --assetsDir statics
-
-      - name: Create 404.html
-        working-directory: ./app/dashboard
-        run: cp ./build/index.html ./build/404.html
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            # vantray/panel
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=tag
+            type=ref,event=branch
+            type=sha,format=short
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Login to GHCR
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@v4
+      #   with:
+      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
+      #     password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          file: ./Dockerfile
           push: true
-          tags: |
-            vantray/panel:latest
-            vantray/panel:${{github.ref_name}}
-            ghcr.io/vantray/panel:latest
-            ghcr.io/vantray/panel:${{github.ref_name}}
+          platforms: linux/amd64,linux/arm64/v8
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+  scan:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trivy scan (linux/amd64)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ needs.build.outputs.image }}
+          format: sarif
+          output: trivy.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy.sarif
