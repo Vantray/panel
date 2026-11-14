@@ -1,35 +1,74 @@
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.14.10
+ARG UV_VERSION=0.13.6
+ARG XRAY_VERSION=latest
 
-FROM python:$PYTHON_VERSION-slim AS build
+FROM alpine:3.24 AS xray
 
-ENV PYTHONUNBUFFERED=1
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG XRAY_VERSION
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache curl unzip
+
+COPY install-xray.sh /tmp/install-xray.sh
+RUN sh /tmp/install-xray.sh
+
+FROM python:${PYTHON_VERSION}-alpine3.24 AS builder
+
+ARG UV_VERSION
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+    build-base \
+    libffi-dev \
+    openssl-dev \
+    postgresql-dev \
+    mariadb-dev \
+    linux-headers \
+    cargo \
+    rust
+
+RUN pip install --no-cache-dir uv==${UV_VERSION}
+
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PYTHON_PREFERENCE=only-system \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+FROM python:${PYTHON_VERSION}-alpine3.24 AS production
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+    libpq \
+    libffi \
+    libstdc++ \
+    mariadb-connector-c \
+    ca-certificates \
+    tzdata
+
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=xray /out/bin/xray /usr/local/bin/xray
+COPY --from=xray /out/share/ /usr/local/share/xray/
+
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8
 
 WORKDIR /code
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential curl unzip gcc python3-dev libpq-dev \
-    && curl -L https://github.com/Vantray/scripts/raw/master/install_latest_xray.sh | bash \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY ./requirements.txt /code/
-RUN python3 -m pip install --upgrade pip setuptools \
-    && pip install --no-cache-dir --upgrade -r /code/requirements.txt
-
-FROM python:$PYTHON_VERSION-slim
-
-ENV PYTHON_LIB_PATH=/usr/local/lib/python${PYTHON_VERSION%.*}/site-packages
-WORKDIR /code
-
-RUN rm -rf $PYTHON_LIB_PATH/*
-
-COPY --from=build $PYTHON_LIB_PATH $PYTHON_LIB_PATH
-COPY --from=build /usr/local/bin /usr/local/bin
-COPY --from=build /usr/local/share/xray /usr/local/share/xray
 
 COPY . /code
 
-RUN ln -s /code/vantray-cli.py /usr/bin/vantray-cli \
-    && chmod +x /usr/bin/vantray-cli \
-    && vantray-cli completion install --shell bash
+RUN ln -s /code/vantray-cli.py /usr/local/bin/vantray-cli \
+    && chmod +x /code/vantray-cli.py
 
-CMD ["bash", "-c", "alembic upgrade head; python main.py"]
+CMD ["sh", "-c", "alembic upgrade head && exec python main.py"]
