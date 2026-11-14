@@ -1,5 +1,4 @@
 from collections import deque
-from datetime import datetime as dt
 from enum import Enum
 from typing import Type
 
@@ -7,6 +6,7 @@ from pydantic import BaseModel
 
 from config import WEBHOOK_ADDRESS
 from app.models.admin import Admin
+from app.utils.helpers import utcnow
 from app.models.user import UserResponse
 
 queue = deque()
@@ -28,8 +28,8 @@ class Notification(BaseModel):
         reached_usage_percent = "reached_usage_percent"
         reached_days_left = "reached_days_left"
 
-    enqueued_at: float = dt.utcnow().timestamp()
-    send_at: float = dt.utcnow().timestamp()
+    enqueued_at: float = utcnow().timestamp()
+    send_at: float = utcnow().timestamp()
     tries: int = 0
 
 

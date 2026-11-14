@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path
 
 import requests
-from genericpath import isdir
 
 # Compile proto files from github repository
 
@@ -85,7 +84,7 @@ def fix_proto_imports(dist):
                     for imp in imports:
                         for found in re.findall(f'from {imp}', content):
                             content = content.replace(found, "from " + new_imp.format(imp))
-                        for found in re.findall(f'import_module\(\'{imp}', content):
+                        for found in re.findall(rf'import_module\(\'{imp}', content):
                             content = content.replace(found, "import_module('" + new_imp.format(imp))
 
                     # Only for v2fly

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,7 @@ from app.db import (GetDB, get_notification_reminder, get_users,
 from app.models.user import ReminderType, UserResponse, UserStatus
 from app.utils import report
 from app.utils.helpers import (calculate_expiration_days,
-                               calculate_usage_percent)
+                               calculate_usage_percent, utcnow)
 from config import (JOB_REVIEW_USERS_INTERVAL, NOTIFY_DAYS_LEFT,
                     NOTIFY_REACHED_USAGE_PERCENT, WEBHOOK_ADDRESS)
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from app.db.models import User
 
 
-def add_notification_reminders(db: Session, user: "User", now: datetime = datetime.utcnow()) -> None:
+def add_notification_reminders(db: Session, user: "User", now: Optional[datetime] = None) -> None:
     if user.data_limit:
         usage_percent = calculate_usage_percent(user.used_traffic, user.data_limit)
 
@@ -52,7 +52,7 @@ def reset_user_by_next_report(db: Session, user: "User"):
 
 
 def review():
-    now = datetime.utcnow()
+    now = utcnow()
     now_ts = now.timestamp()
     with GetDB() as db:
         for user in get_users(db, status=UserStatus.active):

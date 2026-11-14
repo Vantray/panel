@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 
-import commentjson
+import json5
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
@@ -102,7 +102,7 @@ def restart_core(admin: Admin = Depends(Admin.check_sudo_admin)):
 def get_core_config(admin: Admin = Depends(Admin.check_sudo_admin)) -> dict:
     """Get the current core configuration."""
     with open(XRAY_JSON, "r") as f:
-        config = commentjson.loads(f.read())
+        config = json5.loads(f.read())
 
     return config
 

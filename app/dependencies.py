@@ -14,8 +14,13 @@ def validate_admin(db: Session, username: str, password: str) -> Optional[AdminV
         return AdminValidationResult(username=username, is_sudo=True)
 
     dbadmin = crud.get_admin(db, username)
-    if dbadmin and AdminInDB.model_validate(dbadmin).verify_password(password):
-        return AdminValidationResult(username=dbadmin.username, is_sudo=dbadmin.is_sudo)
+    if dbadmin:
+        valid, updated_hash = AdminInDB.model_validate(dbadmin).verify_and_update_password(password)
+        if valid:
+            if updated_hash:  # legacy hash (e.g. bcrypt) -> rehash with the current scheme
+                dbadmin.hashed_password = updated_hash
+                db.commit()
+            return AdminValidationResult(username=dbadmin.username, is_sudo=dbadmin.is_sudo)
 
     return None
 

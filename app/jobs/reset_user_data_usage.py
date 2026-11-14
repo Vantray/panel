@@ -1,6 +1,6 @@
-from datetime import datetime
 
 from app import logger, scheduler, xray
+from app.utils.helpers import utcnow
 from app.db import crud, GetDB, get_users
 from app.models.user import UserDataLimitResetStrategy, UserStatus
 
@@ -13,7 +13,7 @@ reset_strategy_to_days = {
 
 
 def reset_user_data_usage():
-    now = datetime.utcnow()
+    now = utcnow()
     with GetDB() as db:
         for user in get_users(db,
                               status=[

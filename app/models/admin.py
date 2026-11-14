@@ -2,14 +2,17 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.db import Session, crud, get_db
 from app.utils.jwt import get_admin_payload
 from config import SUDOERS
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Argon2 for new hashes; bcrypt kept as legacy verifier for existing $2b$ hashes
+pwd_context = PasswordHash((Argon2Hasher(), BcryptHasher()))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/admin/token")  # Admin view url
 
 
@@ -135,6 +138,14 @@ class AdminInDB(Admin):
 
     def verify_password(self, plain_password):
         return pwd_context.verify(plain_password, self.hashed_password)
+
+    def verify_and_update_password(self, plain_password):
+        """Verify the password and return (valid, updated_hash).
+
+        updated_hash is set when the stored hash uses a legacy scheme (e.g. bcrypt)
+        or outdated parameters and should be replaced with the current hasher.
+        """
+        return pwd_context.verify_and_update(plain_password, self.hashed_password)
 
 
 class AdminValidationResult(BaseModel):

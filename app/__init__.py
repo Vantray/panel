@@ -1,4 +1,7 @@
+import inspect
 import logging
+from collections.abc import Callable
+from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, status
@@ -10,7 +13,36 @@ from fastapi.routing import APIRoute
 
 from config import ALLOWED_ORIGINS, DOCS, XRAY_SUBSCRIPTION_PATH
 
-__version__ = "0.8.4"
+__version__ = "0.1.0"
+
+# Startup/shutdown handlers collected from submodules at import time and run
+# by the lifespan below (replacement for the deprecated @app.on_event API)
+startup_handlers: list[Callable] = []
+shutdown_handlers: list[Callable] = []
+
+
+def on_startup(func: Callable) -> Callable:
+    startup_handlers.append(func)
+    return func
+
+
+def on_shutdown(func: Callable) -> Callable:
+    shutdown_handlers.append(func)
+    return func
+
+
+@asynccontextmanager
+async def lifespan(app_: FastAPI):
+    for handler in startup_handlers:
+        result = handler()
+        if inspect.isawaitable(result):
+            await result
+    yield
+    for handler in shutdown_handlers:
+        result = handler()
+        if inspect.isawaitable(result):
+            await result
+
 
 app = FastAPI(
     title="VantrayAPI",
@@ -18,6 +50,7 @@ app = FastAPI(
     version=__version__,
     docs_url="/docs" if DOCS else None,
     redoc_url="/redoc" if DOCS else None,
+    lifespan=lifespan,
 )
 
 scheduler = BackgroundScheduler(
@@ -47,9 +80,9 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 use_route_names_as_operation_ids(app)
 
 
-@app.on_event("startup")
+@on_startup
 def on_startup():
-    paths = [f"{r.path}/" for r in app.routes]
+    paths = [f"{r.path}/" for r in app.routes if hasattr(r, "path")]
     paths.append("/api/")
     if f"/{XRAY_SUBSCRIPTION_PATH}/" in paths:
         raise ValueError(
@@ -58,7 +91,7 @@ def on_startup():
     scheduler.start()
 
 
-@app.on_event("shutdown")
+@on_shutdown
 def on_shutdown():
     scheduler.shutdown()
 

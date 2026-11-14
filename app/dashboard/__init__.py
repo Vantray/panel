@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from app import app
+from app import app, on_startup
 from config import DEBUG, VITE_BASE_API, DASHBOARD_PATH
 from fastapi.staticfiles import StaticFiles
 
@@ -51,7 +51,7 @@ def run_build():
     )
 
 
-@app.on_event("startup")
+@on_startup
 def startup():
     if DEBUG:
         run_dev()

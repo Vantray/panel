@@ -1,6 +1,20 @@
 import json
-from datetime import datetime as dt
+from datetime import datetime, timezone
 from uuid import UUID
+
+
+def utcnow() -> datetime:
+    """Naive UTC "now", identical in spirit to the removed datetime.utcnow().
+
+    The database stores naive datetimes, so keep the same semantics while
+    avoiding the deprecated datetime.utcnow().
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def utcfromtimestamp(timestamp: float) -> datetime:
+    """Naive UTC datetime from a POSIX timestamp (replacement for the deprecated datetime.utcfromtimestamp)."""
+    return datetime.fromtimestamp(timestamp, timezone.utc).replace(tzinfo=None)
 
 
 def calculate_usage_percent(used_traffic: int, data_limit: int) -> float:
@@ -8,7 +22,7 @@ def calculate_usage_percent(used_traffic: int, data_limit: int) -> float:
 
 
 def calculate_expiration_days(expire: int) -> int:
-    return (dt.fromtimestamp(expire) - dt.utcnow()).days
+    return (datetime.fromtimestamp(expire) - utcnow()).days
 
 
 def yml_uuid_representer(dumper, data):
