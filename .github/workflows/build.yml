@@ -55,7 +55,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            gozargah/marzban:latest
-            gozargah/marzban:${{github.ref_name}}
-            ghcr.io/gozargah/marzban:latest
-            ghcr.io/gozargah/marzban:${{github.ref_name}}
+            vantray/panel:latest
+            vantray/panel:${{github.ref_name}}
+            ghcr.io/vantray/panel:latest
+            ghcr.io/vantray/panel:${{github.ref_name}}

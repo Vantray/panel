@@ -1,8 +1,8 @@
 services:
-  marzban:
-    image: gozargah/marzban:latest
+  vantray:
+    image: ghcr.io/vantray/panel:latest
     restart: always
     env_file: .env
     network_mode: host
     volumes:
-      - /var/lib/marzban:/var/lib/marzban
+      - /var/lib/vantray:/var/lib/vantray

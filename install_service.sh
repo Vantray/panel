@@ -1,8 +1,8 @@
 #!/bin/bash
 
-SERVICE_NAME="marzban"
-SERVICE_DESCRIPTION="Marzban Service"
-SERVICE_DOCUMENTATION="https://github.com/gozargah/marzban"
+SERVICE_NAME="vantray"
+SERVICE_DESCRIPTION="Vantray Service"
+SERVICE_DOCUMENTATION="https://github.com/vantray/panel"
 MAIN_PY_PATH="$PWD/main.py"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
 
