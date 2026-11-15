@@ -13,8 +13,7 @@
 <br/>
 <p align="center">
     <a href="https://github.com/Vantray/panel/releases"><img src="https://img.shields.io/github/v/release/vantray/panel" alt="Release"></a>
-    <a href="https://github.com/Vantray/panel/actions"><img src="https://img.shields.io/github/actions/workflow/status/vantray/panel/release.yml.svg" alt="Build"></a>
-    <a href="https://github.com/Vantray/panel/releases/latest"><img src="https://img.shields.io/github/downloads/vantray/panel/total.svg" alt="Downloads"></a>
+    <a href="https://github.com/Vantray/panel/actions"><img src="https://img.shields.io/github/actions/workflow/status/vantray/panel/build.yml.svg" alt="Build"></a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.html"><img src="https://img.shields.io/github/license/vantray/panel" alt="License" /></a>
 </p>
 
