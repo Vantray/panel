@@ -1,6 +1,5 @@
 import os
 
-
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -21,7 +20,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import select, text
 
 from app import xray
-from app.utils.helpers import utcnow
 from app.db.base import Base
 from app.models.node import NodeStatus
 from app.models.proxy import (
@@ -31,6 +29,7 @@ from app.models.proxy import (
     ProxyTypes,
 )
 from app.models.user import ReminderType, UserDataLimitResetStrategy, UserStatus
+from app.utils.helpers import utcnow
 
 
 class Admin(Base):

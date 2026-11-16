@@ -2,7 +2,6 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from operator import attrgetter
-from typing import Union
 
 from pymysql.err import OperationalError
 from sqlalchemy import and_, bindparam, insert, select, update
@@ -10,9 +9,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
 from app import scheduler, xray
-from app.utils.helpers import utcnow
 from app.db import GetDB
 from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
+from app.utils.helpers import utcnow
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
     JOB_RECORD_NODE_USAGES_INTERVAL,
@@ -46,7 +45,7 @@ def safe_execute(db: Session, stmt, params=None):
         db.commit()
 
 
-def record_user_stats(params: list, node_id: Union[int, None],
+def record_user_stats(params: list, node_id: int | None,
                       consumption_factor: int = 1):
     if not params:
         return
@@ -84,7 +83,7 @@ def record_user_stats(params: list, node_id: Union[int, None],
         safe_execute(db, stmt, params)
 
 
-def record_node_stats(params: dict, node_id: Union[int, None]):
+def record_node_stats(params: dict, node_id: int | None):
     if not params:
         return
 
@@ -113,7 +112,7 @@ def get_users_stats(api: XRayAPI):
         params = defaultdict(int)
         for stat in filter(attrgetter('value'), api.get_users_stats(reset=True, timeout=30)):
             params[stat.name.split('.', 1)[0]] += stat.value
-        params = list({"uid": uid, "value": value} for uid, value in params.items())
+        params = [{"uid": uid, "value": value} for uid, value in params.items()]
         return params
     except xray_exc.XrayError:
         return []
@@ -146,7 +145,7 @@ def record_user_usages():
         coefficient = usage_coefficient.get(node_id, 1)  # get the usage coefficient for the node
         for param in params:
             users_usage[param['uid']] += int(param['value'] * coefficient)  # apply the usage coefficient
-    users_usage = list({"uid": uid, "value": value} for uid, value in users_usage.items())
+    users_usage = [{"uid": uid, "value": value} for uid, value in users_usage.items()]
     if not users_usage:
         return
 
@@ -196,7 +195,7 @@ def record_node_usages():
 
     total_up = 0
     total_down = 0
-    for node_id, params in api_params.items():
+    for _node_id, params in api_params.items():
         for param in params:
             total_up += param['up']
             total_down += param['down']

@@ -17,7 +17,7 @@ from config import (
 )
 
 
-class ClashConfiguration(object):
+class ClashConfiguration:
     def __init__(self):
         self.data = {
             'proxies': [],
@@ -66,12 +66,12 @@ class ClashConfiguration(object):
         return self.render()
 
     def _remark_validation(self, remark):
-        if not remark in self.proxy_remarks:
+        if remark not in self.proxy_remarks:
             return remark
         c = 2
         while True:
             new = f'{remark} ({c})'
-            if not new in self.proxy_remarks:
+            if new not in self.proxy_remarks:
                 return new
             c += 1
 
@@ -346,7 +346,10 @@ class ClashMetaConfiguration(ClashConfiguration):
 
     def add(self, remark: str, address: str, inbound: dict, settings: dict):
         # not supported by clash-meta
-        if inbound['network'] in ("kcp", "splithttp", "xhttp") or (inbound['network'] == "quic" and inbound["header_type"] != "none"):
+        if (
+                inbound['network'] in ("kcp", "splithttp", "xhttp")
+                or (inbound['network'] == "quic" and inbound["header_type"] != "none")
+        ):
             return
 
         proxy_remark = self._remark_validation(remark)
@@ -381,7 +384,11 @@ class ClashMetaConfiguration(ClashConfiguration):
         elif inbound['protocol'] == 'vless':
             node['uuid'] = settings['id']
 
-            if inbound['network'] in ('tcp', 'raw', 'kcp') and inbound['header_type'] != 'http' and inbound['tls'] != 'none':
+            if (
+                    inbound['network'] in ('tcp', 'raw', 'kcp')
+                    and inbound['header_type'] != 'http'
+                    and inbound['tls'] != 'none'
+            ):
                 node['flow'] = settings.get('flow', '')
 
         elif inbound['protocol'] == 'trojan':

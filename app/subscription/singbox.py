@@ -2,16 +2,16 @@ import copy
 import json
 from random import choice
 
-from app.utils.helpers import UUIDEncoder
 from jinja2.exceptions import TemplateNotFound
 
 from app.subscription.funcs import get_grpc_gun
 from app.templates import render_template
+from app.utils.helpers import UUIDEncoder
 from config import (
     MUX_TEMPLATE,
     SINGBOX_SETTINGS_TEMPLATE,
     SINGBOX_SUBSCRIPTION_TEMPLATE,
-    USER_AGENT_TEMPLATE
+    USER_AGENT_TEMPLATE,
 )
 
 
@@ -36,12 +36,12 @@ class SingBoxConfiguration(str):
         del user_agent_data
 
     def _remark_validation(self, remark):
-        if not remark in self.proxy_remarks:
+        if remark not in self.proxy_remarks:
             return remark
         c = 2
         while True:
             new = f'{remark} ({c})'
-            if not new in self.proxy_remarks:
+            if new not in self.proxy_remarks:
                 return new
             c += 1
 
@@ -237,9 +237,13 @@ class SingBoxConfiguration(str):
             "server_port": port,
         }
 
-        if net in ('tcp', 'raw', 'kcp') and headers != 'http' and (tls or tls != 'none'):
-            if flow:
-                config["flow"] = flow
+        if (
+                net in ('tcp', 'raw', 'kcp')
+                and headers != 'http'
+                and (tls or tls != 'none')
+                and flow
+        ):
+            config["flow"] = flow
 
         if net == 'h2':
             net = 'http'
@@ -295,7 +299,7 @@ class SingBoxConfiguration(str):
         if net in ("grpc", "gun"):
             path = get_grpc_gun(path)
 
-        alpn = inbound.get('alpn', None)
+        alpn = inbound.get('alpn')
 
         remark = self._remark_validation(remark)
         self.proxy_remarks.append(remark)
@@ -320,10 +324,7 @@ class SingBoxConfiguration(str):
             mux_enable=inbound.get('mux_enable', False),
             random_user_agent=inbound.get('random_user_agent', False),)
 
-        if inbound['protocol'] == 'vmess':
-            outbound['uuid'] = settings['id']
-
-        elif inbound['protocol'] == 'vless':
+        if inbound['protocol'] == 'vmess' or inbound['protocol'] == 'vless':
             outbound['uuid'] = settings['id']
 
         elif inbound['protocol'] == 'trojan':

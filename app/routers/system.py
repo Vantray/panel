@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -22,7 +21,7 @@ def get_system_stats(
     mem = memory_usage()
     cpu = cpu_usage()
     system = crud.get_system_usage(db)
-    dbadmin: Union[Admin, None] = crud.get_admin(db, admin.username)
+    dbadmin: Admin | None = crud.get_admin(db, admin.username)
 
     total_user = crud.get_users_count(db, admin=dbadmin if not admin.is_sudo else None)
     users_active = crud.get_users_count(
@@ -63,14 +62,14 @@ def get_system_stats(
     )
 
 
-@router.get("/inbounds", response_model=Dict[ProxyTypes, List[ProxyInbound]])
+@router.get("/inbounds", response_model=dict[ProxyTypes, list[ProxyInbound]])
 def get_inbounds(admin: Admin = Depends(Admin.get_current)):
     """Retrieve inbound configurations grouped by protocol."""
     return xray.config.inbounds_by_protocol
 
 
 @router.get(
-    "/hosts", response_model=Dict[str, List[ProxyHost]], responses={403: responses._403}
+    "/hosts", response_model=dict[str, list[ProxyHost]], responses={403: responses._403}
 )
 def get_hosts(
     db: Session = Depends(get_db), admin: Admin = Depends(Admin.check_sudo_admin)
@@ -81,10 +80,10 @@ def get_hosts(
 
 
 @router.put(
-    "/hosts", response_model=Dict[str, List[ProxyHost]], responses={403: responses._403}
+    "/hosts", response_model=dict[str, list[ProxyHost]], responses={403: responses._403}
 )
 def modify_hosts(
-    modified_hosts: Dict[str, List[ProxyHost]],
+    modified_hosts: dict[str, list[ProxyHost]],
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.check_sudo_admin),
 ):

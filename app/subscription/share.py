@@ -4,7 +4,7 @@ import secrets
 from collections import defaultdict
 from datetime import datetime as dt
 from datetime import timedelta
-from typing import TYPE_CHECKING, List, Literal, Union
+from typing import TYPE_CHECKING, Literal
 
 from jdatetime import date as jd
 
@@ -12,7 +12,14 @@ from app import xray
 from app.utils.helpers import utcnow
 from app.utils.system import get_public_ip, get_public_ipv6, readable_size
 
-from . import *
+from . import (
+    ClashConfiguration,
+    ClashMetaConfiguration,
+    OutlineConfiguration,
+    SingBoxConfiguration,
+    V2rayJsonConfig,
+    V2rayShareLink,
+)
 
 if TYPE_CHECKING:
     from app.models.user import UserResponse
@@ -99,7 +106,7 @@ def generate_v2ray_json_subscription(
 
 
 def generate_subscription(
-        user: "UserResponse",
+        user: UserResponse,
         config_format: Literal["v2ray", "clash-meta", "clash", "sing-box", "outline", "v2ray-json"],
         as_base64: bool,
         reverse: bool,
@@ -234,16 +241,16 @@ def process_inbounds_and_tags(
         inbounds: dict,
         proxies: dict,
         format_variables: dict,
-        conf: Union[
-            V2rayShareLink,
-            V2rayJsonConfig,
-            SingBoxConfiguration,
-            ClashConfiguration,
-            ClashMetaConfiguration,
-            OutlineConfiguration
-        ],
+        conf: (
+            V2rayShareLink
+            | V2rayJsonConfig
+            | SingBoxConfiguration
+            | ClashConfiguration
+            | ClashMetaConfiguration
+            | OutlineConfiguration
+        ),
         reverse=False,
-) -> Union[List, str]:
+) -> list | str:
     _inbounds = []
     for protocol, tags in inbounds.items():
         for tag in tags:

@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -120,13 +119,13 @@ def get_current_admin(admin: Admin = Depends(Admin.get_current)):
 
 @router.get(
     "/admins",
-    response_model=List[Admin],
+    response_model=list[Admin],
     responses={403: responses._403},
 )
 def get_admins(
-    offset: Optional[int] = None,
-    limit: Optional[int] = None,
-    username: Optional[str] = None,
+    offset: int | None = None,
+    limit: int | None = None,
+    username: str | None = None,
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.check_sudo_admin),
 ):

@@ -4,7 +4,6 @@ import json
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import PosixPath
-from typing import Union
 
 import json5
 from sqlalchemy import func
@@ -28,20 +27,23 @@ def merge_dicts(a, b):  # B will override A dictionary key and values
 
 class XRayConfig(dict):
     def __init__(self,
-                 config: Union[dict, str, PosixPath] = {},
+                 config: dict | str | PosixPath | None = None,
                  api_host: str = "127.0.0.1",
                  api_port: int = 8080):
+        if config is None:
+            config = {}
+
         if isinstance(config, str):
             try:
                 # considering string as json
                 config = json5.loads(config)
             except (json.JSONDecodeError, ValueError):
                 # considering string as file path
-                with open(config, 'r') as file:
+                with open(config) as file:
                     config = json5.loads(file.read())
 
         if isinstance(config, PosixPath):
-            with open(config, 'r') as file:
+            with open(config) as file:
                 config = json5.loads(file.read())
 
         if isinstance(config, dict):
@@ -142,7 +144,7 @@ class XRayConfig(dict):
 
     def _resolve_inbounds(self):
         for inbound in self['inbounds']:
-            if not inbound['protocol'] in ProxyTypes._value2member_map_:
+            if inbound['protocol'] not in ProxyTypes._value2member_map_:
                 continue
 
             if inbound['tag'] in XRAY_EXCLUDE_INBOUND_TAGS:
@@ -244,7 +246,7 @@ class XRayConfig(dict):
                             f"You need to define at least one shortID in realitySettings of {inbound['tag']}")
                     try:
                         settings['spx'] = tls_settings.get('SpiderX')
-                    except:
+                    except Exception:
                         settings['spx'] = ""
 
                 if net in ('tcp', 'raw'):

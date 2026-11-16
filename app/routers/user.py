@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Union
+from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
@@ -69,13 +68,21 @@ def add_user(
     return user
 
 
-@router.get("/user/{username}", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+@router.get(
+    "/user/{username}",
+    response_model=UserResponse,
+    responses={403: responses._403, 404: responses._404}
+)
 def get_user(dbuser: UserResponse = Depends(get_validated_user)):
     """Get user information"""
     return dbuser
 
 
-@router.put("/user/{username}", response_model=UserResponse, responses={400: responses._400, 403: responses._403, 404: responses._404})
+@router.put(
+    "/user/{username}",
+    response_model=UserResponse,
+    responses={400: responses._400, 403: responses._403, 404: responses._404}
+)
 def modify_user(
     modified_user: UserModify,
     bg: BackgroundTasks,
@@ -89,13 +96,17 @@ def modify_user(
     - **username**: Cannot be changed. Used to identify the user.
     - **status**: User's new status. Can be 'active', 'disabled', 'on_hold', 'limited', or 'expired'.
     - **expire**: UTC timestamp for new account expiration. Set to `0` for unlimited, `null` for no change.
-    - **data_limit**: New max data usage in bytes (e.g., `1073741824` for 1GB). Set to `0` for unlimited, `null` for no change.
-    - **data_limit_reset_strategy**: New strategy for data limit reset. Options include 'daily', 'weekly', 'monthly', or 'no_reset'.
+    - **data_limit**: New max data usage in bytes (e.g., `1073741824` for 1GB).
+      Set to `0` for unlimited, `null` for no change.
+    - **data_limit_reset_strategy**: New strategy for data limit reset.
+      Options include 'daily', 'weekly', 'monthly', or 'no_reset'.
     - **proxies**: Dictionary of new protocol settings (e.g., `vmess`, `vless`). Empty dictionary means no change.
     - **inbounds**: Dictionary of new protocol tags to specify inbound connections. Empty dictionary means no change.
     - **note**: New optional text for additional user information or notes. `null` means no change.
-    - **on_hold_timeout**: New UTC timestamp for when `on_hold` status should start or end. Only applicable if status is changed to 'on_hold'.
-    - **on_hold_expire_duration**: New duration (in seconds) for how long the user should stay in `on_hold` status. Only applicable if status is changed to 'on_hold'.
+    - **on_hold_timeout**: New UTC timestamp for when `on_hold` status should start or end.
+      Only applicable if status is changed to 'on_hold'.
+    - **on_hold_expire_duration**: New duration (in seconds) for how long the user should stay in `on_hold` status.
+      Only applicable if status is changed to 'on_hold'.
     - **next_plan**: Next user plan (resets after use).
 
     Note: Fields set to `null` or omitted will not be modified.
@@ -156,7 +167,11 @@ def remove_user(
     return {"detail": "User successfully deleted"}
 
 
-@router.post("/user/{username}/reset", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+@router.post(
+    "/user/{username}/reset",
+    response_model=UserResponse,
+    responses={403: responses._403, 404: responses._404}
+)
 def reset_user_data_usage(
     bg: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -177,7 +192,11 @@ def reset_user_data_usage(
     return dbuser
 
 
-@router.post("/user/{username}/revoke_sub", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+@router.post(
+    "/user/{username}/revoke_sub",
+    response_model=UserResponse,
+    responses={403: responses._403, 404: responses._404}
+)
 def revoke_user_subscription(
     bg: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -199,13 +218,17 @@ def revoke_user_subscription(
     return user
 
 
-@router.get("/users", response_model=UsersResponse, responses={400: responses._400, 403: responses._403, 404: responses._404})
+@router.get(
+    "/users",
+    response_model=UsersResponse,
+    responses={400: responses._400, 403: responses._403, 404: responses._404}
+)
 def get_users(
     offset: int = None,
     limit: int = None,
-    username: List[str] = Query(None),
-    search: Union[str, None] = None,
-    owner: Union[List[str], None] = Query(None, alias="admin"),
+    username: list[str] = Query(None),
+    search: str | None = None,
+    owner: list[str] | None = Query(None, alias="admin"),
     status: UserStatus = None,
     sort: str = None,
     db: Session = Depends(get_db),
@@ -253,7 +276,11 @@ def reset_users_data_usage(
     return {"detail": "Users successfully reset."}
 
 
-@router.get("/user/{username}/usage", response_model=UserUsagesResponse, responses={403: responses._403, 404: responses._404})
+@router.get(
+    "/user/{username}/usage",
+    response_model=UserUsagesResponse,
+    responses={403: responses._403, 404: responses._404}
+)
 def get_user_usage(
     dbuser: UserResponse = Depends(get_validated_user),
     start: str = "",
@@ -268,7 +295,11 @@ def get_user_usage(
     return {"usages": usages, "username": dbuser.username}
 
 
-@router.post("/user/{username}/active-next", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+@router.post(
+    "/user/{username}/active-next",
+    response_model=UserResponse,
+    responses={403: responses._403, 404: responses._404}
+)
 def active_next_plan(
     bg: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -280,7 +311,7 @@ def active_next_plan(
     if (dbuser is None or dbuser.next_plan is None):
         raise HTTPException(
             status_code=404,
-            detail=f"User doesn't have next plan",
+            detail="User doesn't have next plan",
         )
 
     if dbuser.status in [UserStatus.active, UserStatus.on_hold]:
@@ -300,7 +331,7 @@ def get_users_usage(
     start: str = "",
     end: str = "",
     db: Session = Depends(get_db),
-    owner: Union[List[str], None] = Query(None, alias="admin"),
+    owner: list[str] | None = Query(None, alias="admin"),
     admin: Admin = Depends(Admin.get_current),
 ):
     """Get all users usage"""
@@ -333,10 +364,10 @@ def set_owner(
     return user
 
 
-@router.get("/users/expired", response_model=List[str])
+@router.get("/users/expired", response_model=list[str])
 def get_expired_users(
-    expired_after: Optional[datetime] = Query(None, examples=["2024-01-01T00:00:00"]),
-    expired_before: Optional[datetime] = Query(None, examples=["2024-01-31T23:59:59"]),
+    expired_after: datetime | None = Query(None, examples=["2024-01-01T00:00:00"]),
+    expired_before: datetime | None = Query(None, examples=["2024-01-31T23:59:59"]),
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.get_current),
 ):
@@ -355,11 +386,11 @@ def get_expired_users(
     return [u.username for u in expired_users]
 
 
-@router.delete("/users/expired", response_model=List[str])
+@router.delete("/users/expired", response_model=list[str])
 def delete_expired_users(
     bg: BackgroundTasks,
-    expired_after: Optional[datetime] = Query(None, examples=["2024-01-01T00:00:00"]),
-    expired_before: Optional[datetime] = Query(None, examples=["2024-01-31T23:59:59"]),
+    expired_after: datetime | None = Query(None, examples=["2024-01-01T00:00:00"]),
+    expired_before: datetime | None = Query(None, examples=["2024-01-31T23:59:59"]),
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.get_current),
 ):

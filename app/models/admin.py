@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -24,9 +23,9 @@ class Token(BaseModel):
 class Admin(BaseModel):
     username: str
     is_sudo: bool
-    telegram_id: Optional[int] = None
-    discord_webhook: Optional[str] = None
-    users_usage: Optional[int] = None
+    telegram_id: int | None = None
+    discord_webhook: str | None = None
+    users_usage: int | None = None
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator("users_usage",  mode='before')
@@ -94,8 +93,8 @@ class Admin(BaseModel):
 
 class AdminCreate(Admin):
     password: str
-    telegram_id: Optional[int] = None
-    discord_webhook: Optional[str] = None
+    telegram_id: int | None = None
+    discord_webhook: str | None = None
 
     @property
     def hashed_password(self):
@@ -110,10 +109,10 @@ class AdminCreate(Admin):
 
 
 class AdminModify(BaseModel):
-    password: Optional[str] = None
+    password: str | None = None
     is_sudo: bool
-    telegram_id: Optional[int] = None
-    discord_webhook: Optional[str] = None
+    telegram_id: int | None = None
+    discord_webhook: str | None = None
 
     @property
     def hashed_password(self):
@@ -129,7 +128,7 @@ class AdminModify(BaseModel):
 
 
 class AdminPartialModify(AdminModify):
-    __annotations__ = {k: Optional[v] for k, v in AdminModify.__annotations__.items()}
+    __annotations__ = {k: v | None for k, v in AdminModify.__annotations__.items()}
 
 
 class AdminInDB(Admin):

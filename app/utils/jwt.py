@@ -1,18 +1,17 @@
 import time
-import jwt
 from base64 import b64decode, b64encode
 from datetime import timedelta
-from functools import lru_cache
+from functools import cache
 from hashlib import sha256
 from math import ceil
-from typing import Union
 
+import jwt
 
-from app.utils.helpers import utcnow, utcfromtimestamp
+from app.utils.helpers import utcfromtimestamp, utcnow
 from config import JWT_ACCESS_TOKEN_EXPIRE_MINUTES
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_secret_key():
     from app.db import GetDB, get_jwt_secret_key
     with GetDB() as db:
@@ -28,7 +27,7 @@ def create_admin_token(username: str, is_sudo=False) -> str:
     return encoded_jwt
 
 
-def get_admin_payload(token: str) -> Union[dict, None]:
+def get_admin_payload(token: str) -> dict | None:
     try:
         payload = jwt.decode(token, get_secret_key(), algorithms=["HS256"])
         username: str = payload.get("sub")
@@ -58,7 +57,7 @@ def create_subscription_token(username: str) -> str:
     return data_final
 
 
-def get_subscription_payload(token: str) -> Union[dict, None]:
+def get_subscription_payload(token: str) -> dict | None:
     try:
         if len(token) < 15:
             return
@@ -77,7 +76,7 @@ def get_subscription_payload(token: str) -> Union[dict, None]:
                     (u_token.encode('utf-8') + b'=' * (-len(u_token.encode('utf-8')) % 4)),
                     altchars=b'-_', validate=True)
                 u_token_dec_str = u_token_dec.decode('utf-8')
-            except:
+            except Exception:
                 return
             u_token_resign = b64encode(sha256((u_token+get_secret_key()).encode('utf-8')
                                               ).digest(), altchars=b'-_').decode('utf-8')[:10]

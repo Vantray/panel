@@ -1,4 +1,3 @@
-from typing import Optional, List
 
 import typer
 from rich.table import Table
@@ -14,12 +13,12 @@ app = typer.Typer(no_args_is_help=True)
 
 @app.command(name="list")
 def list_users(
-    offset: Optional[int] = typer.Option(None, *utils.FLAGS["offset"]),
-    limit: Optional[int] = typer.Option(None, *utils.FLAGS["limit"]),
-    username: Optional[List[str]] = typer.Option(None, *utils.FLAGS["username"], help="Search by username(s)"),
-    search: Optional[str] = typer.Option(None, *utils.FLAGS["search"], help="Search by username/note"),
-    status: Optional[crud.UserStatus] = typer.Option(None, *utils.FLAGS["status"]),
-    admins: Optional[List[str]] = typer.Option(None, *utils.FLAGS["admin"], help="Search by owner admin's username(s)")
+    offset: int | None = typer.Option(None, *utils.FLAGS["offset"]),
+    limit: int | None = typer.Option(None, *utils.FLAGS["limit"]),
+    username: list[str] | None = typer.Option(None, *utils.FLAGS["username"], help="Search by username(s)"),
+    search: str | None = typer.Option(None, *utils.FLAGS["search"], help="Search by username/note"),
+    status: crud.UserStatus | None = typer.Option(None, *utils.FLAGS["status"]),
+    admins: list[str] | None = typer.Option(None, *utils.FLAGS["admin"], help="Search by owner admin's username(s)")
 ):
     """
     Displays a table of users

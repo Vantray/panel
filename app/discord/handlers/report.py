@@ -1,11 +1,13 @@
-import requests
 from datetime import datetime
-from app.db.models import User
-from app.utils.system import readable_size
-from app.models.user import UserDataLimitResetStrategy
-from app.models.admin import Admin
+
+import requests
 from telebot.formatting import escape_html
+
 from app import logger
+from app.db.models import User
+from app.models.admin import Admin
+from app.models.user import UserDataLimitResetStrategy
+from app.utils.system import readable_size
 from config import DISCORD_WEBHOOK_URL
 
 
@@ -24,7 +26,7 @@ def send_webhook(json_data, webhook):
     except requests.exceptions.HTTPError as err:
         logger.error(err)
     else:
-        logger.debug("Discord payload delivered successfully, code {}.".format(result.status_code))
+        logger.debug(f"Discord payload delivered successfully, code {result.status_code}.")
 
 
 def report_status_change(username: str, status: str, admin: Admin = None):
@@ -53,7 +55,7 @@ def report_status_change(username: str, status: str, admin: Admin = None):
         ],
     }
     send_webhooks(
-        json_data=statusChange, 
+        json_data=statusChange,
         admin_webhook=admin.discord_webhook if admin and admin.discord_webhook else None
         )
 
@@ -85,17 +87,23 @@ def report_new_user(username: str, by: str, expire_date: int, data_limit: int, p
         ]
     }
     send_webhooks(
-        json_data=reportNewUser, 
+        json_data=reportNewUser,
         admin_webhook=admin.discord_webhook if admin and admin.discord_webhook else None
         )
 
-def report_user_modification(username: str, expire_date: int, data_limit: int, proxies: list, by: str, has_next_plan: bool,
-                    data_limit_reset_strategy:UserDataLimitResetStrategy, admin: Admin = None):
-
-    data_limit=readable_size(data_limit) if data_limit else "Unlimited"
-    expire_date=datetime.fromtimestamp(expire_date).strftime("%H:%M:%S %Y-%m-%d") if expire_date else "Never"
-    proxies="" if not proxies else ", ".join([escape_html(proxy) for proxy in proxies])
-    protocols = proxies
+def report_user_modification(
+        username: str,
+        expire_date: int,
+        data_limit: int,
+        proxies: list,
+        by: str,
+        has_next_plan: bool,
+        data_limit_reset_strategy: UserDataLimitResetStrategy,
+        admin: Admin = None
+):
+    data_limit = readable_size(data_limit) if data_limit else "Unlimited"
+    expire_date = datetime.fromtimestamp(expire_date).strftime("%H:%M:%S %Y-%m-%d") if expire_date else "Never"
+    proxies = "" if not proxies else ", ".join([escape_html(proxy) for proxy in proxies])
 
     reportUserModification = {
         'content': '',
@@ -104,11 +112,11 @@ def report_user_modification(username: str, expire_date: int, data_limit: int, p
                 'title': ':pencil2: Modified',
                 'description': f"""
                 **Username:** {username}
-**Traffic Limit:** {data_limit}
-**Expire Date:** {expire_date}
-**Proxies:** {proxies}
-**Data Limit Reset Strategy:**{data_limit_reset_strategy}
-**Has Next Plan:**{has_next_plan}""",
+                **Traffic Limit:** {data_limit}
+                **Expire Date:** {expire_date}
+                **Proxies:** {proxies}
+                **Data Limit Reset Strategy:**{data_limit_reset_strategy}
+                **Has Next Plan:**{has_next_plan}""",
 
                 "footer": {
                     "text": f"Belongs To: {admin.username if admin else None}\nBy: {by}"

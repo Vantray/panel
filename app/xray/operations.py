@@ -1,4 +1,5 @@
-from functools import lru_cache
+import contextlib
+from functools import cache
 from typing import TYPE_CHECKING
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from app.db.models import Node as DBNode
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_tls():
     from app.db import GetDB, get_tls_certificate
     with GetDB() as db:
@@ -30,33 +31,25 @@ def get_tls():
 
 @threaded_function
 def _add_user_to_inbound(api: XRayAPI, inbound_tag: str, account: Account):
-    try:
+    with contextlib.suppress(xray.exc.EmailExistsError, xray.exc.ConnectionError):
         api.add_inbound_user(tag=inbound_tag, user=account, timeout=30)
-    except (xray.exc.EmailExistsError, xray.exc.ConnectionError):
-        pass
 
 
 @threaded_function
 def _remove_user_from_inbound(api: XRayAPI, inbound_tag: str, email: str):
-    try:
+    with contextlib.suppress(xray.exc.EmailNotFoundError, xray.exc.ConnectionError):
         api.remove_inbound_user(tag=inbound_tag, email=email, timeout=30)
-    except (xray.exc.EmailNotFoundError, xray.exc.ConnectionError):
-        pass
 
 
 @threaded_function
 def _alter_inbound_user(api: XRayAPI, inbound_tag: str, account: Account):
-    try:
+    with contextlib.suppress(xray.exc.EmailNotFoundError, xray.exc.ConnectionError):
         api.remove_inbound_user(tag=inbound_tag, email=account.email, timeout=30)
-    except (xray.exc.EmailNotFoundError, xray.exc.ConnectionError):
-        pass
-    try:
+    with contextlib.suppress(xray.exc.EmailExistsError, xray.exc.ConnectionError):
         api.add_inbound_user(tag=inbound_tag, user=account, timeout=30)
-    except (xray.exc.EmailExistsError, xray.exc.ConnectionError):
-        pass
 
 
-def add_user(dbuser: "DBUser"):
+def add_user(dbuser: DBUser):
     user = UserResponse.model_validate(dbuser)
     email = f"{dbuser.id}.{dbuser.username}"
 
@@ -64,10 +57,8 @@ def add_user(dbuser: "DBUser"):
         for inbound_tag in inbound_tags:
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
 
-            try:
+            with contextlib.suppress(KeyError):
                 proxy_settings = user.proxies[proxy_type].dict(no_obj=True)
-            except KeyError:
-                pass
             account = proxy_type.account_model(email=email, **proxy_settings)
 
             # XTLS currently only supports transmission methods of TCP and mKCP
@@ -90,7 +81,7 @@ def add_user(dbuser: "DBUser"):
                     _add_user_to_inbound(node.api, inbound_tag, account)
 
 
-def remove_user(dbuser: "DBUser"):
+def remove_user(dbuser: DBUser):
     email = f"{dbuser.id}.{dbuser.username}"
 
     for inbound_tag in xray.config.inbounds_by_tag:
@@ -100,7 +91,7 @@ def remove_user(dbuser: "DBUser"):
                 _remove_user_from_inbound(node.api, inbound_tag, email)
 
 
-def update_user(dbuser: "DBUser"):
+def update_user(dbuser: DBUser):
     user = UserResponse.model_validate(dbuser)
     email = f"{dbuser.id}.{dbuser.username}"
 
@@ -110,10 +101,8 @@ def update_user(dbuser: "DBUser"):
             active_inbounds.append(inbound_tag)
             inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
 
-            try:
+            with contextlib.suppress(KeyError):
                 proxy_settings = user.proxies[proxy_type].dict(no_obj=True)
-            except KeyError:
-                pass
             account = proxy_type.account_model(email=email, **proxy_settings)
 
             # XTLS currently only supports transmission methods of TCP and mKCP
@@ -152,13 +141,11 @@ def remove_node(node_id: int):
         except Exception:
             pass
         finally:
-            try:
+            with contextlib.suppress(KeyError):
                 del xray.nodes[node_id]
-            except KeyError:
-                pass
 
 
-def add_node(dbnode: "DBNode"):
+def add_node(dbnode: DBNode):
     remove_node(dbnode.id)
 
     tls = get_tls()
@@ -230,10 +217,8 @@ def connect_node(node_id, config=None):
         logger.info(f"Unable to connect to \"{dbnode.name}\" node")
 
     finally:
-        try:
+        with contextlib.suppress(KeyError):
             del _connecting_nodes[node_id]
-        except KeyError:
-            pass
 
 
 @threaded_function
@@ -263,10 +248,8 @@ def restart_node(node_id, config=None):
     except Exception as e:
         _change_node_status(node_id, NodeStatus.error, message=str(e))
         logger.info(f"Unable to restart node {node_id}")
-        try:
+        with contextlib.suppress(Exception):
             node.disconnect()
-        except Exception:
-            pass
 
 
 __all__ = [

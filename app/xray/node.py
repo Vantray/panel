@@ -1,26 +1,30 @@
-import socket
 import re
+import socket
 import ssl
 import tempfile
 import threading
 import time
 from collections import deque
-from contextlib import contextmanager
-from typing import List
+from collections.abc import Callable
+from contextlib import contextmanager, suppress
 
 import grpc
 import requests
 import rpyc
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
-from websocket import WebSocketConnectionClosedException, WebSocketTimeoutException, create_connection
+from websocket import (
+    WebSocketConnectionClosedException,
+    WebSocketTimeoutException,
+    create_connection,
+)
 
 from app.xray.config import XRayConfig
 from xray_api import XRay as XRayAPI
 
 
 def string_to_temp_file(content: str):
-    file = tempfile.NamedTemporaryFile(mode='w+t')
+    file = tempfile.NamedTemporaryFile(mode='w+t') # noqa: SIM115 (the file is returned to the caller)
     file.write(content)
     file.flush()
     return file
@@ -264,10 +268,8 @@ class ReSTXRayNode:
             yield buf
 
         finally:
-            try:
+            with suppress(ValueError):
                 self._logs_queues.remove(buf)
-            except ValueError:
-                pass
             del buf
 
 
@@ -282,10 +284,10 @@ class RPyCXRayNode:
 
         class Service(rpyc.Service):
             def __init__(self,
-                         on_start_funcs: List[callable] = [],
-                         on_stop_funcs: List[callable] = []):
-                self.on_start_funcs = on_start_funcs
-                self.on_stop_funcs = on_stop_funcs
+                         on_start_funcs: list[Callable] | None = None,
+                         on_stop_funcs: list[Callable] | None = None):
+                self.on_start_funcs = on_start_funcs if on_start_funcs is not None else []
+                self.on_stop_funcs = on_stop_funcs if on_stop_funcs is not None else []
 
             def exposed_on_start(self):
                 for func in self.on_start_funcs:
@@ -454,7 +456,7 @@ class RPyCXRayNode:
             raise ConnectionError("Node is not connected")
 
         try:
-            self.__curr_logs
+            self.__curr_logs  # noqa: B018
         except AttributeError:
             self.__curr_logs = 0
 

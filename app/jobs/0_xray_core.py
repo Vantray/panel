@@ -1,7 +1,8 @@
+import contextlib
 import time
 import traceback
 
-from app import app, logger, on_shutdown, on_startup, scheduler, xray
+from app import logger, on_shutdown, on_startup, scheduler, xray
 from app.db import GetDB, crud
 from app.models.node import NodeStatus
 from config import JOB_CORE_HEALTH_CHECK_INTERVAL
@@ -72,7 +73,5 @@ def app_shutdown():
 
     logger.info("Stopping nodes Xray core")
     for node in list(xray.nodes.values()):
-        try:
+        with contextlib.suppress(Exception):
             node.disconnect()
-        except Exception:
-            pass

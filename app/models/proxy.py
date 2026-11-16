@@ -1,7 +1,6 @@
 import json
 import re
 from enum import Enum
-from typing import Optional, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -141,27 +140,27 @@ class FormatVariables(dict):
 class ProxyHost(BaseModel):
     remark: str
     address: str
-    port: Optional[int] = Field(None)
-    sni: Optional[str] = Field(None)
-    host: Optional[str] = Field(None)
-    path: Optional[str] = Field(None)
+    port: int | None = Field(None)
+    sni: str | None = Field(None)
+    host: str | None = Field(None)
+    path: str | None = Field(None)
     security: ProxyHostSecurity = ProxyHostSecurity.inbound_default
     alpn: ProxyHostALPN = ProxyHostALPN.none
     fingerprint: ProxyHostFingerprint = ProxyHostFingerprint.none
-    allowinsecure: Union[bool, None] = None
-    is_disabled: Union[bool, None] = None
-    mux_enable: Union[bool, None] = None
-    fragment_setting: Optional[str] = Field(None)
-    noise_setting: Optional[str] = Field(None)
-    random_user_agent: Union[bool, None] = None
-    use_sni_as_host: Union[bool, None] = None
+    allowinsecure: bool | None = None
+    is_disabled: bool | None = None
+    mux_enable: bool | None = None
+    fragment_setting: str | None = Field(None)
+    noise_setting: str | None = Field(None)
+    random_user_agent: bool | None = None
+    use_sni_as_host: bool | None = None
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator("remark", mode="after")
     def validate_remark(cls, v):
         try:
             v.format_map(FormatVariables())
-        except ValueError as exc:
+        except ValueError:
             raise ValueError("Invalid formatting variables")
 
         return v
@@ -170,7 +169,7 @@ class ProxyHost(BaseModel):
     def validate_address(cls, v):
         try:
             v.format_map(FormatVariables())
-        except ValueError as exc:
+        except ValueError:
             raise ValueError("Invalid formatting variables")
 
         return v
@@ -204,4 +203,4 @@ class ProxyInbound(BaseModel):
     protocol: ProxyTypes
     network: str
     tls: str
-    port: Union[int, str]
+    port: int | str

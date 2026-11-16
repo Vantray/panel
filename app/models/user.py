@@ -2,7 +2,6 @@ import re
 import secrets
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -49,33 +48,33 @@ class UserDataLimitResetStrategy(str, Enum):
 
 
 class NextPlanModel(BaseModel):
-    data_limit: Optional[int] = None
-    expire: Optional[int] = None
+    data_limit: int | None = None
+    expire: int | None = None
     add_remaining_traffic: bool = False
     fire_on_either: bool = True
     model_config = ConfigDict(from_attributes=True)
 
 
 class User(BaseModel):
-    proxies: Dict[ProxyTypes, ProxySettings] = {}
-    expire: Optional[int] = Field(None)
-    data_limit: Optional[int] = Field(
+    proxies: dict[ProxyTypes, ProxySettings] = {}
+    expire: int | None = Field(None)
+    data_limit: int | None = Field(
         ge=0, default=None, description="data_limit can be 0 or greater"
     )
     data_limit_reset_strategy: UserDataLimitResetStrategy = (
         UserDataLimitResetStrategy.no_reset
     )
-    inbounds: Dict[ProxyTypes, List[str]] = {}
-    note: Optional[str] = Field(None)
-    sub_updated_at: Optional[datetime] = Field(None)
-    sub_last_user_agent: Optional[str] = Field(None)
-    online_at: Optional[datetime] = Field(None)
-    on_hold_expire_duration: Optional[int] = Field(None)
-    on_hold_timeout: Optional[Union[datetime, None]] = Field(None)
+    inbounds: dict[ProxyTypes, list[str]] = {}
+    note: str | None = Field(None)
+    sub_updated_at: datetime | None = Field(None)
+    sub_last_user_agent: str | None = Field(None)
+    online_at: datetime | None = Field(None)
+    on_hold_expire_duration: int | None = Field(None)
+    on_hold_timeout: datetime | None | None = Field(None)
 
-    auto_delete_in_days: Optional[int] = Field(None)
+    auto_delete_in_days: int | None = Field(None)
 
-    next_plan: Optional[NextPlanModel] = Field(None)
+    next_plan: NextPlanModel | None = Field(None)
 
     @field_validator('data_limit', mode='before')
     def cast_to_int(cls, v):
@@ -157,7 +156,7 @@ class UserCreate(User):
         for proxy_type in self.proxies:
             excluded[proxy_type] = []
             for inbound in xray.config.inbounds_by_protocol.get(proxy_type, []):
-                if not inbound["tag"] in self.inbounds.get(proxy_type, []):
+                if inbound["tag"] not in self.inbounds.get(proxy_type, []):
                     excluded[proxy_type].append(inbound["tag"])
 
         return excluded
@@ -238,7 +237,7 @@ class UserModify(User):
         for proxy_type in self.inbounds:
             excluded[proxy_type] = []
             for inbound in xray.config.inbounds_by_protocol.get(proxy_type, []):
-                if not inbound["tag"] in self.inbounds.get(proxy_type, []):
+                if inbound["tag"] not in self.inbounds.get(proxy_type, []):
                     excluded[proxy_type].append(inbound["tag"])
 
         return excluded
@@ -248,7 +247,7 @@ class UserModify(User):
         # check with inbounds, "proxies" is optional on modifying
         # so inbounds particularly can be modified
         if inbounds:
-            for proxy_type, tags in inbounds.items():
+            for _proxy_type, tags in inbounds.items():
 
                 # if not tags:
                 #     raise ValueError(f"{proxy_type} inbounds cannot be empty")
@@ -285,12 +284,12 @@ class UserResponse(User):
     used_traffic: int
     lifetime_used_traffic: int = 0
     created_at: datetime
-    links: List[str] = []
+    links: list[str] = []
     subscription_url: str = ""
     proxies: dict
-    excluded_inbounds: Dict[ProxyTypes, List[str]] = {}
+    excluded_inbounds: dict[ProxyTypes, list[str]] = {}
 
-    admin: Optional[Admin] = None
+    admin: Admin | None = None
     model_config = ConfigDict(from_attributes=True)
 
     @model_validator(mode="after")
@@ -329,20 +328,20 @@ class UserResponse(User):
 
 class SubscriptionUserResponse(UserResponse):
     admin: Admin | None = Field(default=None, exclude=True)
-    excluded_inbounds: Dict[ProxyTypes, List[str]] | None = Field(None, exclude=True)
+    excluded_inbounds: dict[ProxyTypes, list[str]] | None = Field(None, exclude=True)
     note: str | None = Field(None, exclude=True)
-    inbounds: Dict[ProxyTypes, List[str]] | None = Field(None, exclude=True)
+    inbounds: dict[ProxyTypes, list[str]] | None = Field(None, exclude=True)
     auto_delete_in_days: int | None = Field(None, exclude=True)
     model_config = ConfigDict(from_attributes=True)
 
 
 class UsersResponse(BaseModel):
-    users: List[UserResponse]
+    users: list[UserResponse]
     total: int
 
 
 class UserUsageResponse(BaseModel):
-    node_id: Union[int, None] = None
+    node_id: int | None = None
     node_name: str
     used_traffic: int
 
@@ -359,8 +358,8 @@ class UserUsageResponse(BaseModel):
 
 class UserUsagesResponse(BaseModel):
     username: str
-    usages: List[UserUsageResponse]
+    usages: list[UserUsageResponse]
 
 
 class UsersUsagesResponse(BaseModel):
-    usages: List[UserUsageResponse]
+    usages: list[UserUsageResponse]

@@ -1,9 +1,8 @@
 import re
 
-from packaging.version import Version
-
 from fastapi import APIRouter, Depends, Header, Path, Request, Response
 from fastapi.responses import HTMLResponse
+from packaging.version import Version
 
 from app.db import Session, crud, get_db
 from app.dependencies import get_validated_sub, validate_dates

@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from random import randint
-from typing import TYPE_CHECKING, Dict, Sequence
+from typing import TYPE_CHECKING
 
 from app.models.proxy import ProxyHostSecurity
 from app.utils.store import DictStorage
@@ -26,7 +27,7 @@ finally:
 
 api = XRayAPI(config.api_host, config.api_port)
 
-nodes: Dict[int, XRayNode] = {}
+nodes: dict[int, XRayNode] = {}
 
 
 if TYPE_CHECKING:

@@ -1,23 +1,32 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
 from app import logger, scheduler, xray
-from app.db import (GetDB, get_notification_reminder, get_users,
-                    start_user_expire, update_user_status, reset_user_by_next)
+from app.db import (
+    GetDB,
+    get_notification_reminder,
+    get_users,
+    reset_user_by_next,
+    start_user_expire,
+    update_user_status,
+)
 from app.models.user import ReminderType, UserResponse, UserStatus
 from app.utils import report
-from app.utils.helpers import (calculate_expiration_days,
-                               calculate_usage_percent, utcnow)
-from config import (JOB_REVIEW_USERS_INTERVAL, NOTIFY_DAYS_LEFT,
-                    NOTIFY_REACHED_USAGE_PERCENT, WEBHOOK_ADDRESS)
+from app.utils.helpers import calculate_expiration_days, calculate_usage_percent, utcnow
+from config import (
+    JOB_REVIEW_USERS_INTERVAL,
+    NOTIFY_DAYS_LEFT,
+    NOTIFY_REACHED_USAGE_PERCENT,
+    WEBHOOK_ADDRESS,
+)
 
 if TYPE_CHECKING:
     from app.db.models import User
 
 
-def add_notification_reminders(db: Session, user: "User", now: Optional[datetime] = None) -> None:
+def add_notification_reminders(db: Session, user: User, now: datetime | None = None) -> None:
     if user.data_limit:
         usage_percent = calculate_usage_percent(user.used_traffic, user.data_limit)
 
@@ -43,7 +52,7 @@ def add_notification_reminders(db: Session, user: "User", now: Optional[datetime
                 break
 
 
-def reset_user_by_next_report(db: Session, user: "User"):
+def reset_user_by_next_report(db: Session, user: User):
     user = reset_user_by_next(db, user)
 
     xray.operations.update_user(user)
@@ -60,16 +69,14 @@ def review():
             limited = user.data_limit and user.used_traffic >= user.data_limit
             expired = user.expire and user.expire <= now_ts
 
-            if (limited or expired) and user.next_plan is not None:
-                if user.next_plan is not None:
-
-                    if user.next_plan.fire_on_either:
-                        reset_user_by_next_report(db, user)
-                        continue
-
-                    elif limited and expired:
-                        reset_user_by_next_report(db, user)
-                        continue
+            next_plan = user.next_plan
+            if (
+                    next_plan is not None
+                    and (limited or expired)
+                    and (next_plan.fire_on_either or (limited and expired))
+            ):
+                reset_user_by_next_report(db, user)
+                continue
 
             if limited:
                 status = UserStatus.limited

@@ -2,9 +2,9 @@ from typing import Union
 
 import jinja2
 
+from app.utils.helpers import utcnow
 from config import CUSTOM_TEMPLATES_DIRECTORY
 
-from app.utils.helpers import utcnow
 from .filters import CUSTOM_FILTERS
 
 template_directories = ["app/templates"]
@@ -17,5 +17,5 @@ env.filters.update(CUSTOM_FILTERS)
 env.globals['now'] = utcnow
 
 
-def render_template(template: str, context: Union[dict, None] = None) -> str:
+def render_template(template: str, context: dict | None = None) -> str:
     return env.get_template(template).render(context or {})

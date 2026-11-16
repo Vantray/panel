@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import List, Optional
 
-from pydantic import ConfigDict, BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NodeStatus(str, Enum):
@@ -39,12 +38,12 @@ class NodeCreate(Node):
 
 
 class NodeModify(Node):
-    name: Optional[str] = Field(None)
-    address: Optional[str] = Field(None)
-    port: Optional[int] = Field(None)
-    api_port: Optional[int] = Field(None)
-    status: Optional[NodeStatus] = Field(None)
-    usage_coefficient: Optional[float] = Field(None)
+    name: str | None = Field(None)
+    address: str | None = Field(None)
+    port: int | None = Field(None)
+    api_port: int | None = Field(None)
+    status: NodeStatus | None = Field(None)
+    usage_coefficient: float | None = Field(None)
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "name": "DE node",
@@ -59,18 +58,18 @@ class NodeModify(Node):
 
 class NodeResponse(Node):
     id: int
-    xray_version: Optional[str] = None
+    xray_version: str | None = None
     status: NodeStatus
-    message: Optional[str] = None
+    message: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
 class NodeUsageResponse(BaseModel):
-    node_id: Optional[int] = None
+    node_id: int | None = None
     node_name: str
     uplink: int
     downlink: int
 
 
 class NodesUsageResponse(BaseModel):
-    usages: List[NodeUsageResponse]
+    usages: list[NodeUsageResponse]

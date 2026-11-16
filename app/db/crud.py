@@ -2,9 +2,9 @@
 Functions for managing proxy hosts, users, user templates, nodes, and administrative tasks.
 """
 
+import contextlib
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
 
 from sqlalchemy import and_, delete, func, or_
 from sqlalchemy.orm import Query, Session, joinedload
@@ -42,8 +42,7 @@ from app.models.user import (
     UserUsageResponse,
 )
 from app.models.user_template import UserTemplateCreate, UserTemplateModify
-from app.utils.helpers import (calculate_expiration_days, calculate_usage_percent,
-                               utcnow)
+from app.utils.helpers import calculate_expiration_days, calculate_usage_percent, utcnow
 from config import NOTIFY_DAYS_LEFT, NOTIFY_REACHED_USAGE_PERCENT, USERS_AUTODELETE_DAYS
 
 
@@ -81,7 +80,7 @@ def get_or_create_inbound(db: Session, inbound_tag: str) -> ProxyInbound:
     return inbound
 
 
-def get_hosts(db: Session, inbound_tag: str) -> List[ProxyHost]:
+def get_hosts(db: Session, inbound_tag: str) -> list[ProxyHost]:
     """
     Retrieves hosts for a given inbound tag.
 
@@ -96,7 +95,7 @@ def get_hosts(db: Session, inbound_tag: str) -> List[ProxyHost]:
     return inbound.hosts
 
 
-def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[ProxyHost]:
+def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> list[ProxyHost]:
     """
     Adds a new host to a proxy inbound.
 
@@ -128,7 +127,7 @@ def add_host(db: Session, inbound_tag: str, host: ProxyHostModify) -> List[Proxy
     return inbound.hosts
 
 
-def update_hosts(db: Session, inbound_tag: str, modified_hosts: List[ProxyHostModify]) -> List[ProxyHost]:
+def update_hosts(db: Session, inbound_tag: str, modified_hosts: list[ProxyHostModify]) -> list[ProxyHost]:
     """
     Updates hosts for a given inbound tag.
 
@@ -180,7 +179,7 @@ def get_user_queryset(db: Session) -> Query:
     return db.query(User).options(joinedload(User.admin)).options(joinedload(User.next_plan))
 
 
-def get_user(db: Session, username: str) -> Optional[User]:
+def get_user(db: Session, username: str) -> User | None:
     """
     Retrieves a user by username.
 
@@ -194,7 +193,7 @@ def get_user(db: Session, username: str) -> Optional[User]:
     return get_user_queryset(db).filter(User.username == username).first()
 
 
-def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
+def get_user_by_id(db: Session, user_id: int) -> User | None:
     """
     Retrieves a user by user ID.
 
@@ -223,16 +222,16 @@ UsersSortingOptions = Enum('UsersSortingOptions', {
 
 
 def get_users(db: Session,
-              offset: Optional[int] = None,
-              limit: Optional[int] = None,
-              usernames: Optional[List[str]] = None,
-              search: Optional[str] = None,
-              status: Optional[Union[UserStatus, list]] = None,
-              sort: Optional[List[UsersSortingOptions]] = None,
-              admin: Optional[Admin] = None,
-              admins: Optional[List[str]] = None,
-              reset_strategy: Optional[Union[UserDataLimitResetStrategy, list]] = None,
-              return_with_count: bool = False) -> Union[List[User], Tuple[List[User], int]]:
+              offset: int | None = None,
+              limit: int | None = None,
+              usernames: list[str] | None = None,
+              search: str | None = None,
+              status: UserStatus | list | None = None,
+              sort: list[UsersSortingOptions] | None = None,
+              admin: Admin | None = None,
+              admins: list[str] | None = None,
+              reset_strategy: UserDataLimitResetStrategy | list | None = None,
+              return_with_count: bool = False) -> list[User] | tuple[list[User], int]:
     """
     Retrieves users based on various filters and options.
 
@@ -295,7 +294,7 @@ def get_users(db: Session,
     return query.all()
 
 
-def get_user_usages(db: Session, dbuser: User, start: datetime, end: datetime) -> List[UserUsageResponse]:
+def get_user_usages(db: Session, dbuser: User, start: datetime, end: datetime) -> list[UserUsageResponse]:
     """
     Retrieves user usages within a specified date range.
 
@@ -327,10 +326,8 @@ def get_user_usages(db: Session, dbuser: User, start: datetime, end: datetime) -
                 NodeUserUsage.created_at <= end)
 
     for v in db.query(NodeUserUsage).filter(cond):
-        try:
+        with contextlib.suppress(KeyError):
             usages[v.node_id or 0].used_traffic += v.used_traffic
-        except KeyError:
-            pass
 
     return list(usages.values())
 
@@ -420,7 +417,7 @@ def remove_user(db: Session, dbuser: User) -> User:
     return dbuser
 
 
-def remove_users(db: Session, dbusers: List[User]):
+def remove_users(db: Session, dbusers: list[User]):
     """
     Removes multiple users from the database.
 
@@ -446,7 +443,7 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     Returns:
         User: The updated user object.
     """
-    added_proxies: Dict[ProxyTypes, Proxy] = {}
+    added_proxies: dict[ProxyTypes, Proxy] = {}
     if modify.proxies:
         for proxy_type, settings in modify.proxies.items():
             dbproxy = db.query(Proxy) \
@@ -647,7 +644,7 @@ def update_user_sub(db: Session, dbuser: User, user_agent: str) -> User:
     return dbuser
 
 
-def reset_all_users_data_usage(db: Session, admin: Optional[Admin] = None):
+def reset_all_users_data_usage(db: Session, admin: Admin | None = None):
     """
     Resets the data usage for all users or users under a specific admin.
 
@@ -674,7 +671,7 @@ def reset_all_users_data_usage(db: Session, admin: Optional[Admin] = None):
     db.commit()
 
 
-def disable_all_active_users(db: Session, admin: Optional[Admin] = None):
+def disable_all_active_users(db: Session, admin: Admin | None = None):
     """
     Disable all active users or users under a specific admin.
 
@@ -691,7 +688,7 @@ def disable_all_active_users(db: Session, admin: Optional[Admin] = None):
     db.commit()
 
 
-def activate_all_disabled_users(db: Session, admin: Optional[Admin] = None):
+def activate_all_disabled_users(db: Session, admin: Admin | None = None):
     """
     Activate all disabled users or users under a specific admin.
 
@@ -718,7 +715,7 @@ def activate_all_disabled_users(db: Session, admin: Optional[Admin] = None):
 
 
 def autodelete_expired_users(db: Session,
-                             include_limited_users: bool = False) -> List[User]:
+                             include_limited_users: bool = False) -> list[User]:
     """
     Deletes expired (optionally also limited) users whose auto-delete time has passed.
 
@@ -759,7 +756,7 @@ def autodelete_expired_users(db: Session,
 
 def get_all_users_usages(
         db: Session, admin: Admin, start: datetime, end: datetime
-) -> List[UserUsageResponse]:
+) -> list[UserUsageResponse]:
     """
     Retrieves usage data for all users associated with an admin within a specified time range.
 
@@ -789,7 +786,7 @@ def get_all_users_usages(
             used_traffic=0
         )
 
-    admin_users = set(user.id for user in get_users(db=db, admins=admin))
+    admin_users = {user.id for user in get_users(db=db, admins=admin)}
 
     cond = and_(
         NodeUserUsage.created_at >= start,
@@ -798,10 +795,8 @@ def get_all_users_usages(
     )
 
     for v in db.query(NodeUserUsage).filter(cond):
-        try:
+        with contextlib.suppress(KeyError):
             usages[v.node_id or 0].used_traffic += v.used_traffic
-        except KeyError:
-            pass
 
     return list(usages.values())
 
@@ -1039,9 +1034,9 @@ def get_admin_by_telegram_id(db: Session, telegram_id: int) -> Admin:
 
 
 def get_admins(db: Session,
-               offset: Optional[int] = None,
-               limit: Optional[int] = None,
-               username: Optional[str] = None) -> List[Admin]:
+               offset: int | None = None,
+               limit: int | None = None,
+               username: str | None = None) -> list[Admin]:
     """
     Retrieves a list of admins with optional filters and pagination.
 
@@ -1099,7 +1094,7 @@ def create_user_template(db: Session, user_template: UserTemplateCreate) -> User
     Returns:
         UserTemplate: The created user template object.
     """
-    inbound_tags: List[str] = []
+    inbound_tags: list[str] = []
     for _, i in user_template.inbounds.items():
         inbound_tags.extend(i)
     dbuser_template = UserTemplate(
@@ -1141,7 +1136,7 @@ def update_user_template(
         dbuser_template.username_suffix = modified_user_template.username_suffix
 
     if modified_user_template.inbounds:
-        inbound_tags: List[str] = []
+        inbound_tags: list[str] = []
         for _, i in modified_user_template.inbounds.items():
             inbound_tags.extend(i)
         dbuser_template.inbounds = db.query(ProxyInbound).filter(ProxyInbound.tag.in_(inbound_tags)).all()
@@ -1178,7 +1173,7 @@ def get_user_template(db: Session, user_template_id: int) -> UserTemplate:
 
 
 def get_user_templates(
-        db: Session, offset: Union[int, None] = None, limit: Union[int, None] = None) -> List[UserTemplate]:
+        db: Session, offset: int | None = None, limit: int | None = None) -> list[UserTemplate]:
     """
     Retrieves a list of user templates with optional pagination.
 
@@ -1199,7 +1194,7 @@ def get_user_templates(
     return dbuser_templates.all()
 
 
-def get_node(db: Session, name: str) -> Optional[Node]:
+def get_node(db: Session, name: str) -> Node | None:
     """
     Retrieves a node by its name.
 
@@ -1213,7 +1208,7 @@ def get_node(db: Session, name: str) -> Optional[Node]:
     return db.query(Node).filter(Node.name == name).first()
 
 
-def get_node_by_id(db: Session, node_id: int) -> Optional[Node]:
+def get_node_by_id(db: Session, node_id: int) -> Node | None:
     """
     Retrieves a node by its ID.
 
@@ -1228,8 +1223,8 @@ def get_node_by_id(db: Session, node_id: int) -> Optional[Node]:
 
 
 def get_nodes(db: Session,
-              status: Optional[Union[NodeStatus, list]] = None,
-              enabled: bool = None) -> List[Node]:
+              status: NodeStatus | list | None = None,
+              enabled: bool = None) -> list[Node]:
     """
     Retrieves nodes based on optional status and enabled filters.
 
@@ -1255,7 +1250,7 @@ def get_nodes(db: Session,
     return query.all()
 
 
-def get_nodes_usage(db: Session, start: datetime, end: datetime) -> List[NodeUsageResponse]:
+def get_nodes_usage(db: Session, start: datetime, end: datetime) -> list[NodeUsageResponse]:
     """
     Retrieves usage data for all nodes within a specified time range.
 
@@ -1395,7 +1390,12 @@ def update_node_status(db: Session, dbnode: Node, status: NodeStatus, message: s
 
 
 def create_notification_reminder(
-        db: Session, reminder_type: ReminderType, expires_at: datetime, user_id: int, threshold: Optional[int] = None) -> NotificationReminder:
+        db: Session,
+        reminder_type: ReminderType,
+        expires_at: datetime,
+        user_id: int,
+        threshold: int | None = None
+) -> NotificationReminder:
     """
     Creates a new notification reminder.
 
@@ -1419,8 +1419,8 @@ def create_notification_reminder(
 
 
 def get_notification_reminder(
-        db: Session, user_id: int, reminder_type: ReminderType, threshold: Optional[int] = None
-) -> Union[NotificationReminder, None]:
+        db: Session, user_id: int, reminder_type: ReminderType, threshold: int | None = None
+) -> NotificationReminder | None:
     """
     Retrieves a notification reminder for a user.
 
@@ -1457,7 +1457,7 @@ def get_notification_reminder(
 
 
 def delete_notification_reminder_by_type(
-        db: Session, user_id: int, reminder_type: ReminderType, threshold: Optional[int] = None
+        db: Session, user_id: int, reminder_type: ReminderType, threshold: int | None = None
 ) -> None:
     """
     Deletes a notification reminder for a user based on the reminder type and optional threshold.
@@ -1466,7 +1466,8 @@ def delete_notification_reminder_by_type(
         db (Session): The database session.
         user_id (int): The ID of the user.
         reminder_type (ReminderType): The type of reminder to delete.
-        threshold (Optional[int]): The threshold to delete (e.g., days left or usage percent). If not provided, deletes all reminders of that type.
+        threshold (Optional[int]): The threshold to delete (e.g., days left or usage percent).
+         If not provided, deletes all reminders of that type.
     """
     stmt = delete(NotificationReminder).where(
         NotificationReminder.user_id == user_id,

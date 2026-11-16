@@ -98,10 +98,7 @@ class XRayCore:
         if not self.process:
             return False
 
-        if self.process.poll() is None:
-            return True
-
-        return False
+        return self.process.poll() is None
 
     def start(self, config: XRayConfig):
         if self.started is True:

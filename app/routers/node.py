@@ -1,6 +1,5 @@
 import asyncio
 import time
-from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket
 from sqlalchemy.exc import IntegrityError
@@ -115,7 +114,7 @@ async def node_logs(node_id: int, websocket: WebSocket, db: Session = Depends(ge
     node = xray.nodes[node_id]
     with node.get_logs() as logs:
         while True:
-            if not node == xray.nodes[node_id]:
+            if node != xray.nodes[node_id]:
                 break
 
             if interval and time.time() - last_sent_ts >= interval and cache:
@@ -130,7 +129,7 @@ async def node_logs(node_id: int, websocket: WebSocket, db: Session = Depends(ge
                 try:
                     await asyncio.wait_for(websocket.receive(), timeout=0.2)
                     continue
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
                 except (WebSocketDisconnect, RuntimeError):
                     break
@@ -147,7 +146,7 @@ async def node_logs(node_id: int, websocket: WebSocket, db: Session = Depends(ge
                 break
 
 
-@router.get("/nodes", response_model=List[NodeResponse])
+@router.get("/nodes", response_model=list[NodeResponse])
 def get_nodes(
     db: Session = Depends(get_db), _: Admin = Depends(Admin.check_sudo_admin)
 ):

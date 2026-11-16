@@ -58,7 +58,7 @@ async def core_logs(websocket: WebSocket, db: Session = Depends(get_db)):
                 try:
                     await asyncio.wait_for(websocket.receive(), timeout=0.2)
                     continue
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
                 except (WebSocketDisconnect, RuntimeError):
                     break
@@ -101,7 +101,7 @@ def restart_core(admin: Admin = Depends(Admin.check_sudo_admin)):
 @router.get("/core/config", responses={403: responses._403})
 def get_core_config(admin: Admin = Depends(Admin.check_sudo_admin)) -> dict:
     """Get the current core configuration."""
-    with open(XRAY_JSON, "r") as f:
+    with open(XRAY_JSON) as f:
         config = json5.loads(f.read())
 
     return config

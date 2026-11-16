@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 
@@ -9,12 +9,12 @@ def utcnow() -> datetime:
     The database stores naive datetimes, so keep the same semantics while
     avoiding the deprecated datetime.utcnow().
     """
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def utcfromtimestamp(timestamp: float) -> datetime:
     """Naive UTC datetime from a POSIX timestamp (replacement for the deprecated datetime.utcfromtimestamp)."""
-    return datetime.fromtimestamp(timestamp, timezone.utc).replace(tzinfo=None)
+    return datetime.fromtimestamp(timestamp, UTC).replace(tzinfo=None)
 
 
 def calculate_usage_percent(used_traffic: int, data_limit: int) -> float:

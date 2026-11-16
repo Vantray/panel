@@ -1,10 +1,11 @@
 from datetime import datetime
-from app.db import GetDB, crud
-from app.models.user import UserResponse
-from app.telegram import bot
+
 from telebot.custom_filters import ChatFilter
 from telebot.util import extract_arguments
 
+from app.db import GetDB, crud
+from app.models.user import UserResponse
+from app.telegram import bot
 from app.utils.system import readable_size
 
 bot.add_custom_filter(ChatFilter())
@@ -37,6 +38,8 @@ def usage_command(message):
 │          └─<b>Data Used:</b> <code>{readable_size(user.used_traffic) if user.used_traffic else "-"}</code>
 │
 └─📅 <b>Expiry Date:</b> <code>{datetime.fromtimestamp(user.expire).date() if user.expire else 'Never'}</code>
-            └─<b>Days left:</b> <code>{(datetime.fromtimestamp(user.expire or 0) - datetime.now()).days if user.expire else '-'}</code>'''
+            └─<b>Days left:</b> <code>{
+        (datetime.fromtimestamp(user.expire or 0) - datetime.now()).days if user.expire else '-'
+        }</code>'''
 
     return bot.reply_to(message, text, parse_mode='HTML')

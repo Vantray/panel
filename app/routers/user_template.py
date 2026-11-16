@@ -1,13 +1,15 @@
-from typing import List
 
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
-from fastapi import Depends, HTTPException, APIRouter
 
 from app.db import Session, crud, get_db
-from app.models.admin import Admin
-from app.models.user_template import (UserTemplateCreate, UserTemplateModify,
-                                      UserTemplateResponse)
 from app.dependencies import get_user_template
+from app.models.admin import Admin
+from app.models.user_template import (
+    UserTemplateCreate,
+    UserTemplateModify,
+    UserTemplateResponse,
+)
 
 router = APIRouter(tags=['User Template'], prefix='/api')
 
@@ -72,7 +74,7 @@ def remove_user_template(
     return crud.remove_user_template(db, dbuser_template)
 
 
-@router.get("/user_template", response_model=List[UserTemplateResponse])
+@router.get("/user_template", response_model=list[UserTemplateResponse])
 def get_user_templates(
     offset: int = None,
     limit: int = None,

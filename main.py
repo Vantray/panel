@@ -1,23 +1,33 @@
-import click
+import contextlib
 import logging
 import os
 import ssl
 
+import click
 import uvicorn
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-from app import app, logger
-from config import (DEBUG, UVICORN_HOST, UVICORN_PORT, UVICORN_SSL_CERTFILE,
-                    UVICORN_SSL_KEYFILE, UVICORN_SSL_CA_TYPE, UVICORN_UDS)
+from app import app, logger  # noqa: F401 -- `app` is referenced by string in uvicorn.run("main:app")
+from config import (
+    DEBUG,
+    UVICORN_HOST,
+    UVICORN_PORT,
+    UVICORN_SSL_CA_TYPE,
+    UVICORN_SSL_CERTFILE,
+    UVICORN_SSL_KEYFILE,
+    UVICORN_UDS,
+)
 
 
 def validate_cert_and_key(cert_file_path, key_file_path, ca_type):
     if ca_type == "private":
         logger.warning(f"""
-{click.style('IMPORTANT!', blink=True, bold=True, fg="yellow")} 
-You're running Vantray with: {click.style('UVICORN_SSL_CA_TYPE', italic=True, fg="magenta")}: {click.style(f'{ca_type}', bold=True, fg="yellow")}. 
-Self-signed CAs are useful in testing or internal use cases, they’re not suitable for secure public internet communications.
+{click.style('IMPORTANT!', blink=True, bold=True, fg="yellow")}
+You're running Vantray with: {click.style('UVICORN_SSL_CA_TYPE', italic=True, fg="magenta")}:
+{click.style(f'{ca_type}', bold=True, fg="yellow")}.
+Self-signed CAs are useful in testing or internal use cases,
+they’re not suitable for secure public internet communications.
         """)
         return
 
@@ -71,12 +81,17 @@ if __name__ == "__main__":
 
             logger.warning(f"""
 {click.style('IMPORTANT!', blink=True, bold=True, fg="yellow")}
-You're running Vantray without specifying {click.style('UVICORN_SSL_CERTFILE', italic=True, fg="magenta")} and {click.style('UVICORN_SSL_KEYFILE', italic=True, fg="magenta")}.
-The application will only be accessible through localhost. This means that {click.style('Vantray and subscription URLs will not be accessible externally', bold=True)}.
+You're running Vantray without specifying {click.style('UVICORN_SSL_CERTFILE', italic=True, fg="magenta")}
+and {click.style('UVICORN_SSL_KEYFILE', italic=True, fg="magenta")}.
+The application will only be accessible through localhost. This means that
+{click.style('Vantray and subscription URLs will not be accessible externally', bold=True)}.
 
-If you need external access, please provide the SSL files to allow the server to bind to 0.0.0.0. Alternatively, you can run the server on localhost or a Unix socket and use a reverse proxy, such as Nginx or Caddy, to handle SSL termination and provide external access.
+If you need external access, please provide the SSL files to allow the server to bind to 0.0.0.0.
+Alternatively, you can run the server on localhost or a Unix socket and use a reverse proxy,
+such as Nginx or Caddy, to handle SSL termination and provide external access.
 
-If you wish to continue without SSL, you can use SSH port forwarding to access the application from your machine. note that in this case, subscription functionality will not work. 
+If you wish to continue without SSL, you can use SSH port forwarding to access the application from your machine.
+note that in this case, subscription functionality will not work.
 
 Use the following command:
 
@@ -92,7 +107,7 @@ Then, navigate to {click.style(f'http://127.0.0.1:{UVICORN_PORT}', bold=True)} o
         bind_args['uds'] = None
         bind_args['host'] = '0.0.0.0'
 
-    try:
+    with contextlib.suppress(FileNotFoundError): # to prevent error on removing unix sock
         uvicorn.run(
             "main:app",
             **bind_args,
@@ -100,5 +115,3 @@ Then, navigate to {click.style(f'http://127.0.0.1:{UVICORN_PORT}', bold=True)} o
             reload=DEBUG,
             log_level=logging.DEBUG if DEBUG else logging.INFO
         )
-    except FileNotFoundError:  # to prevent error on removing unix sock
-        pass

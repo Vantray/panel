@@ -1,6 +1,6 @@
-import typer
 from enum import Enum
-from typing import Optional
+
+import typer
 from rich.console import Console
 
 from app.db import GetDB
@@ -37,7 +37,7 @@ def get_link(
 def get_config(
     username: str = typer.Option(..., *utils.FLAGS["username"], prompt=True),
     config_format: ConfigFormat = typer.Option(..., *utils.FLAGS["format"], prompt=True),
-    output_file: Optional[str] = typer.Option(
+    output_file: str | None = typer.Option(
         None, *utils.FLAGS["output_file"], help="Writes the generated config in the file if provided"
     ),
     as_base64: bool = typer.Option(

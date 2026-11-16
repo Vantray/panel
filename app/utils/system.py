@@ -12,14 +12,14 @@ from app import scheduler
 
 
 @dataclass
-class MemoryStat():
+class MemoryStat:
     total: int
     used: int
     free: int
 
 
 @dataclass
-class CPUStat():
+class CPUStat:
     cores: int
     percent: float
 
@@ -80,8 +80,14 @@ def record_realtime_bandwidth() -> None:
     sample_time = rt_bw.last_perf_counter - last_perf_counter
     rt_bw.incoming_bytes, rt_bw.bytes_recv = round((io.bytes_recv - rt_bw.bytes_recv) / sample_time), io.bytes_recv
     rt_bw.outgoing_bytes, rt_bw.bytes_sent = round((io.bytes_sent - rt_bw.bytes_sent) / sample_time), io.bytes_sent
-    rt_bw.incoming_packets, rt_bw.packets_recv = round((io.packets_recv - rt_bw.packets_recv) / sample_time), io.packets_recv
-    rt_bw.outgoing_packets, rt_bw.packets_sent = round((io.packets_sent - rt_bw.packets_sent) / sample_time), io.packets_sent
+    rt_bw.incoming_packets, rt_bw.packets_recv = (
+        round((io.packets_recv - rt_bw.packets_recv) / sample_time),
+        io.packets_recv
+    )
+    rt_bw.outgoing_packets, rt_bw.packets_sent = (
+        round((io.packets_sent - rt_bw.packets_sent) / sample_time),
+        io.packets_sent
+    )
 
 
 def realtime_bandwidth() -> RealtimeBandwidthStat:
@@ -102,7 +108,7 @@ def check_port(port: int) -> bool:
     try:
         s.connect(('127.0.0.1', port))
         return True
-    except socket.error:
+    except OSError:
         return False
     finally:
         s.close()
@@ -113,14 +119,14 @@ def get_public_ip():
         resp = requests.get('http://api4.ipify.org/', timeout=5).text.strip()
         if ipaddress.IPv4Address(resp).is_global:
             return resp
-    except:
+    except Exception:
         pass
 
     try:
         resp = requests.get('http://ipv4.icanhazip.com/', timeout=5).text.strip()
         if ipaddress.IPv4Address(resp).is_global:
             return resp
-    except:
+    except Exception:
         pass
 
     try:
@@ -139,7 +145,7 @@ def get_public_ip():
         resp = sock.getsockname()[0]
         if ipaddress.IPv4Address(resp).is_global:
             return resp
-    except (socket.error, IndexError):
+    except (OSError, IndexError):
         pass
     finally:
         sock.close()
@@ -151,15 +157,15 @@ def get_public_ipv6():
     try:
         resp = requests.get('http://api6.ipify.org/', timeout=5).text.strip()
         if ipaddress.IPv6Address(resp).is_global:
-            return '[%s]' % resp
-    except:
+            return f'[{resp}]'
+    except Exception:
         pass
 
     try:
         resp = requests.get('http://ipv6.icanhazip.com/', timeout=5).text.strip()
         if ipaddress.IPv6Address(resp).is_global:
-            return '[%s]' % resp
-    except:
+            return f'[{resp}]'
+    except Exception:
         pass
 
     return '[::1]'

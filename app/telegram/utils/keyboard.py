@@ -1,6 +1,6 @@
 from datetime import datetime as dt
 from itertools import islice
-from typing import Dict, List, Literal
+from typing import Literal
 
 from telebot import types  # noqa
 
@@ -10,7 +10,7 @@ from app.utils.system import readable_size
 
 def chunk_dict(data: dict, size: int = 2):
     it = iter(data)
-    for i in range(0, len(data), size):
+    for _i in range(0, len(data), size):
         yield {k: data[k] for k in islice(it, size)}
 
 
@@ -59,7 +59,7 @@ class BotKeyboard:
         return keyboard
 
     @staticmethod
-    def templates_menu(templates: Dict[str, int], username: str = None):
+    def templates_menu(templates: dict[str, int], username: str = None):
         keyboard = types.InlineKeyboardMarkup()
 
         for chunk in chunk_dict(templates):
@@ -198,7 +198,7 @@ class BotKeyboard:
             ),
             types.InlineKeyboardButton(
                 text='No',
-                callback_data=f"cancel"
+                callback_data="cancel"
             )
         )
         return keyboard
@@ -238,7 +238,6 @@ class BotKeyboard:
     def user_list(users: list, page: int, total_pages: int):
         keyboard = types.InlineKeyboardMarkup()
         if len(users) >= 2:
-            users = [p for p in users]
             users = [users[i:i + 2] for i in range(0, len(users), 2)]
         else:
             users = [users]
@@ -283,7 +282,7 @@ class BotKeyboard:
 
     @staticmethod
     def select_protocols(
-            selected_protocols: Dict[str, List[str]],
+            selected_protocols: dict[str, list[str]],
             action: Literal["edit", "create", "create_from_template"],
             username: str = None,
             data_limit: float = None,
@@ -294,15 +293,17 @@ class BotKeyboard:
         keyboard = types.InlineKeyboardMarkup()
 
         if action == "edit":
-            keyboard.add(types.InlineKeyboardButton(text="⚠️ Data Limit:", callback_data=f"help_edit"))
+            keyboard.add(types.InlineKeyboardButton(text="⚠️ Data Limit:", callback_data="help_edit"))
             keyboard.add(
                 types.InlineKeyboardButton(
                     text=f"{readable_size(data_limit) if data_limit else 'Unlimited'}",
-                    callback_data=f"help_edit"
+                    callback_data="help_edit"
                 ),
                 types.InlineKeyboardButton(text="✏️ Edit", callback_data=f"edit_user:{username}:data"))
             if expire_on_hold_duration:
-                keyboard.add(types.InlineKeyboardButton(text="⏳ Duration:", callback_data=f"edit_user:{username}:expire"))
+                keyboard.add(
+                    types.InlineKeyboardButton(text="⏳ Duration:", callback_data=f"edit_user:{username}:expire")
+                )
                 keyboard.add(
                     types.InlineKeyboardButton(
                         text=f"{int(expire_on_hold_duration / 24 / 60 / 60)} روز",
@@ -326,11 +327,11 @@ class BotKeyboard:
                     )
                 )
             else:
-                keyboard.add(types.InlineKeyboardButton(text="📅 Expire Date:", callback_data=f"help_edit"))
+                keyboard.add(types.InlineKeyboardButton(text="📅 Expire Date:", callback_data="help_edit"))
                 keyboard.add(
                     types.InlineKeyboardButton(
                         text=f"{expire_date.strftime('%Y-%m-%d') if expire_date else 'Never'}",
-                        callback_data=f"help_edit"
+                        callback_data="help_edit"
                     ),
                     types.InlineKeyboardButton(text="✏️ Edit", callback_data=f"edit_user:{username}:expire"))
 
@@ -346,7 +347,8 @@ class BotKeyboard:
                     for inbound in inbounds:
                         keyboard.add(
                             types.InlineKeyboardButton(
-                                text=f"«{inbound['tag']}» {'✅' if inbound['tag'] in selected_protocols[protocol] else '❌'}",
+                                text=f"«{inbound['tag']}» "
+                                     f"{'✅' if inbound['tag'] in selected_protocols[protocol] else '❌'}",
                                 callback_data=f'select_inbound:{inbound["tag"]}:{action}'
                             )
                         )

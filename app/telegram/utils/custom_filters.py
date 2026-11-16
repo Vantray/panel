@@ -1,8 +1,7 @@
-from app.telegram import bot
-
 from telebot import types
 from telebot.custom_filters import AdvancedCustomFilter
 
+from app.telegram import bot
 from config import TELEGRAM_ADMIN_ID
 
 

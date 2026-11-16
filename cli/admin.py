@@ -1,4 +1,3 @@
-from typing import Optional, Union
 
 import typer
 from decouple import UndefinedValueError, config
@@ -18,7 +17,7 @@ from . import utils
 app = typer.Typer(no_args_is_help=True)
 
 
-def validate_telegram_id(value: Union[int, str]) -> Union[int, None]:
+def validate_telegram_id(value: int | str) -> int | None:
     if not value:
         return 0
     if not isinstance(value, int) and not value.isdigit():
@@ -28,7 +27,7 @@ def validate_telegram_id(value: Union[int, str]) -> Union[int, None]:
     return value
 
 
-def validate_discord_webhook(value: str) -> Union[str, None]:
+def validate_discord_webhook(value: str) -> str | None:
     if not value or value == "0":
         return ""
     if not value.startswith("https://discord.com/api/webhooks/"):
@@ -50,9 +49,9 @@ def calculate_admin_reseted_usage(admin_id: int) -> str:
 
 @app.command(name="list")
 def list_admins(
-    offset: Optional[int] = typer.Option(None, *utils.FLAGS["offset"]),
-    limit: Optional[int] = typer.Option(None, *utils.FLAGS["limit"]),
-    username: Optional[str] = typer.Option(None, *utils.FLAGS["username"], help="Search by username"),
+    offset: int | None = typer.Option(None, *utils.FLAGS["offset"]),
+    limit: int | None = typer.Option(None, *utils.FLAGS["limit"]),
+    username: str | None = typer.Option(None, *utils.FLAGS["username"], help="Search by username"),
 ):
     """Displays a table of admins"""
     with GetDB() as db:
@@ -85,7 +84,7 @@ def delete_admin(
     Confirmations can be skipped using `--yes/-y` option.
     """
     with GetDB() as db:
-        admin: Union[Admin, None] = crud.get_admin(db, username=username)
+        admin: Admin | None = crud.get_admin(db, username=username)
         if not admin:
             utils.error(f"There's no admin with username \"{username}\"!")
 
@@ -138,7 +137,7 @@ def update_admin(username: str = typer.Option(..., *utils.FLAGS["username"], pro
         )
 
         is_sudo: bool = typer.confirm("Is sudo", default=admin.is_sudo)
-        new_password: Union[str, None] = typer.prompt(
+        new_password: str | None = typer.prompt(
             "New password",
             default="",
             show_default=False,
@@ -162,7 +161,7 @@ def update_admin(username: str = typer.Option(..., *utils.FLAGS["username"], pro
         )
 
     with GetDB() as db:
-        admin: Union[Admin, None] = crud.get_admin(db, username=username)
+        admin: Admin | None = crud.get_admin(db, username=username)
         if not admin:
             utils.error(f"There's no admin with username \"{username}\"!")
 
@@ -194,7 +193,7 @@ def import_from_env(yes_to_all: bool = typer.Option(False, *utils.FLAGS["yes_to_
                     "Make sure both SUDO_USERNAME and SUDO_PASSWORD are set.")
 
     with GetDB() as db:
-        admin: Union[None, Admin] = None
+        admin: None | Admin = None
 
         # If env admin already exists
         if current_admin := crud.get_admin(db, username=username):

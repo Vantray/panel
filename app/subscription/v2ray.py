@@ -3,7 +3,6 @@ import copy
 import json
 import urllib.parse as urlparse
 from random import choice
-from typing import Union
 from urllib.parse import quote
 from uuid import UUID
 
@@ -166,7 +165,7 @@ class V2rayShareLink(str):
             remark: str,
             address: str,
             port: int,
-            id: Union[str, UUID],
+            id: str | UUID,
             host="",
             net="tcp",
             path="",
@@ -189,8 +188,11 @@ class V2rayShareLink(str):
             noGRPCHeader: bool = False,
             heartbeatPeriod: int = 0,
             keepAlivePeriod: int = 0,
-            xmux: dict = {},
+            xmux: dict | None = None,
     ):
+        if xmux is None:
+            xmux = {}
+
         payload = {
             "add": address,
             "aid": "0",
@@ -248,9 +250,8 @@ class V2rayShareLink(str):
                 extra["keepAlivePeriod"] = keepAlivePeriod
             payload["extra"] = extra
 
-        elif net == "ws":
-            if heartbeatPeriod:
-                payload["heartbeatPeriod"] = heartbeatPeriod
+        elif net == "ws" and heartbeatPeriod:
+            payload["heartbeatPeriod"] = heartbeatPeriod
 
         return (
             "vmess://"
@@ -264,7 +265,7 @@ class V2rayShareLink(str):
               remark: str,
               address: str,
               port: int,
-              id: Union[str, UUID],
+              id: str | UUID,
               net='ws',
               path='',
               host='',
@@ -288,8 +289,10 @@ class V2rayShareLink(str):
               noGRPCHeader: bool = False,
               heartbeatPeriod: int = 0,
               keepAlivePeriod: int = 0,
-              xmux: dict = {},
+              xmux: dict | None = None,
               ):
+        if xmux is None:
+            xmux = {}
 
         payload = {
             "security": tls,
@@ -396,8 +399,10 @@ class V2rayShareLink(str):
                noGRPCHeader: bool = False,
                heartbeatPeriod: int = 0,
                keepAlivePeriod: int = 0,
-               xmux: dict = {},
+               xmux: dict | None = None,
                ):
+        if xmux is None:
+            xmux = {}
 
         payload = {
             "security": tls,
@@ -562,7 +567,13 @@ class V2rayJsonConfig(str):
 
         return realitySettings
 
-    def ws_config(self, path: str = "", host: str = "", random_user_agent: bool = False, heartbeatPeriod: int = 0) -> dict:
+    def ws_config(
+            self,
+            path: str = "",
+            host: str = "",
+            random_user_agent: bool = False,
+            heartbeatPeriod: int = 0
+    ) -> dict:
         wsSettings = copy.deepcopy(self.settings.get("wsSettings", {}))
 
         if "headers" not in wsSettings:
@@ -593,16 +604,23 @@ class V2rayJsonConfig(str):
 
         return httpupgradeSettings
 
-    def splithttp_config(self, path: str = "", host: str = "", random_user_agent: bool = False,
-                         sc_max_each_post_bytes: int = 1000000,
-                         sc_max_concurrent_posts: int = 100,
-                         sc_min_posts_interval_ms: int = 30,
-                         x_padding_bytes: str = "100-1000",
-                         xmux: dict = {},
-                         mode: str = "auto",
-                         noGRPCHeader: bool = False,
-                         keepAlivePeriod: int = 0,
-                         ) -> dict:
+    def splithttp_config(
+            self,
+            path: str = "",
+            host: str = "",
+            random_user_agent: bool = False,
+            sc_max_each_post_bytes: int = 1000000,
+            sc_max_concurrent_posts: int = 100,
+            sc_min_posts_interval_ms: int = 30,
+            x_padding_bytes: str = "100-1000",
+            xmux: dict | None = None,
+            mode: str = "auto",
+            noGRPCHeader: bool = False,
+            keepAlivePeriod: int = 0,
+    ) -> dict:
+        if xmux is None:
+            xmux = {}
+
         config = copy.deepcopy(self.settings.get("splithttpSettings", {}))
 
         config["mode"] = mode
@@ -678,13 +696,11 @@ class V2rayJsonConfig(str):
         if headers:
             config["header"]["type"] = headers
 
-        if any((path, host, random_user_agent)):
-            if "request" not in config["header"]:
-                config["header"]["request"] = {}
+        if any((path, host, random_user_agent)) and "request" not in config["header"]:
+            config["header"]["request"] = {}
 
-        if any((random_user_agent, host)):
-            if "headers" not in config["header"]["request"]:
-                config["header"]["request"]["headers"] = {}
+        if any((random_user_agent, host)) and "headers" not in config["header"]["request"]:
+            config["header"]["request"]["headers"] = {}
 
         if path:
             config["header"]["request"]["path"] = [path]
@@ -885,7 +901,7 @@ class V2rayJsonConfig(str):
         return noises_settings
 
     @staticmethod
-    def make_dialer_outbound(fragment: str = "", noises: str = "") -> Union[dict, None]:
+    def make_dialer_outbound(fragment: str = "", noises: str = "") -> dict | None:
         dialer_settings = {}
         if fragment:
             dialer_settings["fragment"] = V2rayJsonConfig.make_fragment(fragment)
@@ -921,12 +937,14 @@ class V2rayJsonConfig(str):
                             sc_max_concurrent_posts: int = 100,
                             sc_min_posts_interval_ms: int = 30,
                             x_padding_bytes: str = "100-1000",
-                            xmux: dict = {},
+                            xmux: dict | None = None,
                             mode: str = "auto",
                             noGRPCHeader: bool = False,
                             heartbeatPeriod: int = 0,
                             keepAlivePeriod: int = 0,
                             ) -> dict:
+        if xmux is None:
+            xmux = {}
 
         if net == "ws":
             network_setting = self.ws_config(
@@ -1044,7 +1062,7 @@ class V2rayJsonConfig(str):
             dialer_proxy = extra_outbound['tag']
             outbounds.append(extra_outbound)
 
-        alpn = inbound.get('alpn', None)
+        alpn = inbound.get('alpn')
         outbound["streamSettings"] = self.make_stream_setting(
             net=net,
             tls=tls,

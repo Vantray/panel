@@ -1,25 +1,28 @@
 from datetime import timedelta as td
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi.encoders import jsonable_encoder
 from requests import Session
 
-from app import app, logger, on_shutdown, scheduler
+from app import logger, on_shutdown, scheduler
 from app.db import GetDB
 from app.db.models import NotificationReminder
 from app.utils.helpers import utcnow
 from app.utils.notification import queue
-from config import (JOB_SEND_NOTIFICATIONS_INTERVAL,
-                    NUMBER_OF_RECURRENT_NOTIFICATIONS,
-                    RECURRENT_NOTIFICATIONS_TIMEOUT, WEBHOOK_ADDRESS,
-                    WEBHOOK_SECRET)
+from config import (
+    JOB_SEND_NOTIFICATIONS_INTERVAL,
+    NUMBER_OF_RECURRENT_NOTIFICATIONS,
+    RECURRENT_NOTIFICATIONS_TIMEOUT,
+    WEBHOOK_ADDRESS,
+    WEBHOOK_SECRET,
+)
 
 session = Session()
 
 headers = {"x-webhook-secret": WEBHOOK_SECRET} if WEBHOOK_SECRET else None
 
 
-def send(data: List[Dict[Any, Any]]) -> bool:
+def send(data: list[dict[Any, Any]]) -> bool:
     """Send the notification to the webhook address provided by WEBHOOK_ADDRESS
 
     Args:
@@ -33,10 +36,7 @@ def send(data: List[Dict[Any, Any]]) -> bool:
     for webhook in WEBHOOK_ADDRESS:
         result = send_req(w_address=webhook, data=data)
         result_list.append(result)
-    if True in result_list:
-        return True
-    else:
-        return False
+    return True in result_list
 
 
 def send_req(w_address: str, data):
@@ -55,7 +55,7 @@ def send_notifications():
     if not queue:
         return
 
-    notifications_to_send = list()
+    notifications_to_send = []
     try:
         while (notification := queue.popleft()):
             if (notification.tries > NUMBER_OF_RECURRENT_NOTIFICATIONS):
