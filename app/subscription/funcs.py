@@ -10,6 +10,7 @@ def get_grpc_gun(path: str) -> str:
 
     return f"{servicename}/{streamname}"
 
+
 def get_grpc_multi(path: str) -> str:
     if not path.startswith("/"):
         return path

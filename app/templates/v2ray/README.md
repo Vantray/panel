@@ -58,4 +58,4 @@ you can use these docs to find out how to modify template files
 
 [Xray Docs](https://xtls.github.io/en/) \
 [Xray Examples](https://github.com/XTLS/Xray-examples) \
-[Xray Examples](https://github.com/chika0801/Xray-examples) Unofficial 
+[Xray Examples](https://github.com/chika0801/Xray-examples) Unofficial

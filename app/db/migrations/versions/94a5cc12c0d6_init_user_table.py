@@ -1,7 +1,7 @@
 """init user table
 
 Revision ID: 94a5cc12c0d6
-Revises: 
+Revises:
 Create Date: 2022-11-18 20:54:05.616546
 
 """

@@ -34,10 +34,18 @@ When starting development on this project, please make sure to create a new bran
 ## Backend
 Backend is built using FastAPI and uses SQLAlchemy as the ORM for database operations. All Pydantic models can be found in the `app/models` directory, while all database-related operations and models are in the `app/db` directory. The migration scripts for the database (Alembic) can be found in the `app/db/migrations` directory.
 
-### Python Code Formatting
-To maintain consistency in the codebase, we require all code to be formatted using 
+### Code Style & Pre-commit Hooks
+Linting and formatting are enforced with [ruff](https://docs.astral.sh/ruff/) via [pre-commit](https://pre-commit.com/). After cloning the repo, install the hooks once:
+
 ```bash
-autopep8 <file> --max-line-length 120
+uv sync
+pre-commit install
+```
+
+The hooks will then run automatically on every `git commit`. To run them against all files (e.g. before opening a PR):
+
+```bash
+pre-commit run --all-files
 ```
 
 ## Frontend
@@ -64,4 +72,3 @@ cd ../..
 ```
 
 If you run the project with debug mode off and delete the `app/dashboard/build` directory, the frontend will be rebuilt automatically on the next run. However, no rebuild will occur while inside debug mode."
-

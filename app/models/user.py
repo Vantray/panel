@@ -58,12 +58,8 @@ class NextPlanModel(BaseModel):
 class User(BaseModel):
     proxies: dict[ProxyTypes, ProxySettings] = {}
     expire: int | None = Field(None)
-    data_limit: int | None = Field(
-        ge=0, default=None, description="data_limit can be 0 or greater"
-    )
-    data_limit_reset_strategy: UserDataLimitResetStrategy = (
-        UserDataLimitResetStrategy.no_reset
-    )
+    data_limit: int | None = Field(ge=0, default=None, description="data_limit can be 0 or greater")
+    data_limit_reset_strategy: UserDataLimitResetStrategy = UserDataLimitResetStrategy.no_reset
     inbounds: dict[ProxyTypes, list[str]] = {}
     note: str | None = Field(None)
     sub_updated_at: datetime | None = Field(None)
@@ -76,7 +72,7 @@ class User(BaseModel):
 
     next_plan: NextPlanModel | None = Field(None)
 
-    @field_validator('data_limit', mode='before')
+    @field_validator("data_limit", mode="before")
     def cast_to_int(cls, v):
         if v is None:  # Allow None values
             return v
@@ -90,11 +86,7 @@ class User(BaseModel):
     def validate_proxies(cls, v, values, **kwargs):
         if not v:
             raise ValueError("Each user needs at least one proxy")
-        return {
-            proxy_type: ProxySettings.from_dict(
-                proxy_type, v.get(proxy_type, {}))
-            for proxy_type in v
-        }
+        return {proxy_type: ProxySettings.from_dict(proxy_type, v.get(proxy_type, {})) for proxy_type in v}
 
     @field_validator("username", check_fields=False)
     @classmethod
@@ -115,7 +107,7 @@ class User(BaseModel):
     @field_validator("on_hold_expire_duration", "on_hold_timeout", mode="before")
     def validate_timeout(cls, v, values):
         # Check if expire is 0 or None and timeout is not 0 or None
-        if (v in (0, None)):
+        if v in (0, None):
             return None
         return v
 
@@ -123,32 +115,29 @@ class User(BaseModel):
 class UserCreate(User):
     username: str
     status: UserStatusCreate = None
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "username": "user1234",
-            "proxies": {
-                "vmess": {"id": "35e4e39c-7d5c-4f4b-8b71-558e4f37ff53"},
-                "vless": {},
-            },
-            "inbounds": {
-                "vmess": ["VMess TCP", "VMess Websocket"],
-                "vless": ["VLESS TCP REALITY", "VLESS GRPC REALITY"],
-            },
-            "next_plan": {
-                "data_limit": 0,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "username": "user1234",
+                "proxies": {
+                    "vmess": {"id": "35e4e39c-7d5c-4f4b-8b71-558e4f37ff53"},
+                    "vless": {},
+                },
+                "inbounds": {
+                    "vmess": ["VMess TCP", "VMess Websocket"],
+                    "vless": ["VLESS TCP REALITY", "VLESS GRPC REALITY"],
+                },
+                "next_plan": {"data_limit": 0, "expire": 0, "add_remaining_traffic": False, "fire_on_either": True},
                 "expire": 0,
-                "add_remaining_traffic": False,
-                "fire_on_either": True
-            },
-            "expire": 0,
-            "data_limit": 0,
-            "data_limit_reset_strategy": "no_reset",
-            "status": "active",
-            "note": "",
-            "on_hold_timeout": "2023-11-03T20:30:00",
-            "on_hold_expire_duration": 0,
+                "data_limit": 0,
+                "data_limit_reset_strategy": "no_reset",
+                "status": "active",
+                "note": "",
+                "on_hold_timeout": "2023-11-03T20:30:00",
+                "on_hold_expire_duration": 0,
+            }
         }
-    })
+    )
 
     @property
     def excluded_inbounds(self):
@@ -183,10 +172,7 @@ class UserCreate(User):
             #     raise ValueError(f"{proxy_type} inbounds cannot be empty")
 
             else:
-                inbounds[proxy_type] = [
-                    i["tag"]
-                    for i in xray.config.inbounds_by_protocol.get(proxy_type, [])
-                ]
+                inbounds[proxy_type] = [i["tag"] for i in xray.config.inbounds_by_protocol.get(proxy_type, [])]
 
         return inbounds
 
@@ -195,7 +181,7 @@ class UserCreate(User):
         on_hold_expire = values.data.get("on_hold_expire_duration")
         expire = values.data.get("expire")
         if status == UserStatusCreate.on_hold:
-            if (on_hold_expire == 0 or on_hold_expire is None):
+            if on_hold_expire == 0 or on_hold_expire is None:
                 raise ValueError("User cannot be on hold without a valid on_hold_expire_duration.")
             if expire:
                 raise ValueError("User cannot be on hold with specified expire.")
@@ -205,31 +191,28 @@ class UserCreate(User):
 class UserModify(User):
     status: UserStatusModify = None
     data_limit_reset_strategy: UserDataLimitResetStrategy = None
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "proxies": {
-                "vmess": {"id": "35e4e39c-7d5c-4f4b-8b71-558e4f37ff53"},
-                "vless": {},
-            },
-            "inbounds": {
-                "vmess": ["VMess TCP", "VMess Websocket"],
-                "vless": ["VLESS TCP REALITY", "VLESS GRPC REALITY"],
-            },
-            "next_plan": {
-                "data_limit": 0,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "proxies": {
+                    "vmess": {"id": "35e4e39c-7d5c-4f4b-8b71-558e4f37ff53"},
+                    "vless": {},
+                },
+                "inbounds": {
+                    "vmess": ["VMess TCP", "VMess Websocket"],
+                    "vless": ["VLESS TCP REALITY", "VLESS GRPC REALITY"],
+                },
+                "next_plan": {"data_limit": 0, "expire": 0, "add_remaining_traffic": False, "fire_on_either": True},
                 "expire": 0,
-                "add_remaining_traffic": False,
-                "fire_on_either": True
-            },
-            "expire": 0,
-            "data_limit": 0,
-            "data_limit_reset_strategy": "no_reset",
-            "status": "active",
-            "note": "",
-            "on_hold_timeout": "2023-11-03T20:30:00",
-            "on_hold_expire_duration": 0,
+                "data_limit": 0,
+                "data_limit_reset_strategy": "no_reset",
+                "status": "active",
+                "note": "",
+                "on_hold_timeout": "2023-11-03T20:30:00",
+                "on_hold_expire_duration": 0,
+            }
         }
-    })
+    )
 
     @property
     def excluded_inbounds(self):
@@ -248,7 +231,6 @@ class UserModify(User):
         # so inbounds particularly can be modified
         if inbounds:
             for _proxy_type, tags in inbounds.items():
-
                 # if not tags:
                 #     raise ValueError(f"{proxy_type} inbounds cannot be empty")
 
@@ -260,18 +242,14 @@ class UserModify(User):
 
     @field_validator("proxies", mode="before")
     def validate_proxies(cls, v):
-        return {
-            proxy_type: ProxySettings.from_dict(
-                proxy_type, v.get(proxy_type, {}))
-            for proxy_type in v
-        }
+        return {proxy_type: ProxySettings.from_dict(proxy_type, v.get(proxy_type, {})) for proxy_type in v}
 
     @field_validator("status", mode="before")
     def validate_status(cls, status, values):
         on_hold_expire = values.data.get("on_hold_expire_duration")
         expire = values.data.get("expire")
         if status == UserStatusCreate.on_hold:
-            if (on_hold_expire == 0 or on_hold_expire is None):
+            if on_hold_expire == 0 or on_hold_expire is None:
                 raise ValueError("User cannot be on hold without a valid on_hold_expire_duration.")
             if expire:
                 raise ValueError("User cannot be on hold with specified expire.")
@@ -296,7 +274,10 @@ class UserResponse(User):
     def validate_links(self):
         if not self.links:
             self.links = generate_v2ray_links(
-                self.proxies, self.inbounds, extra_data=self.model_dump(), reverse=False,
+                self.proxies,
+                self.inbounds,
+                extra_data=self.model_dump(),
+                reverse=False,
             )
         return self
 
@@ -304,7 +285,7 @@ class UserResponse(User):
     def validate_subscription_url(self):
         if not self.subscription_url:
             salt = secrets.token_hex(8)
-            url_prefix = (XRAY_SUBSCRIPTION_URL_PREFIX).replace('*', salt)
+            url_prefix = (XRAY_SUBSCRIPTION_URL_PREFIX).replace("*", salt)
             token = create_subscription_token(self.username)
             self.subscription_url = f"{url_prefix}/{XRAY_SUBSCRIPTION_PATH}/{token}"
         return self
@@ -315,7 +296,7 @@ class UserResponse(User):
             v = {p.type: p.settings for p in v}
         return super().validate_proxies(v, values, **kwargs)
 
-    @field_validator("used_traffic", "lifetime_used_traffic", mode='before')
+    @field_validator("used_traffic", "lifetime_used_traffic", mode="before")
     def cast_to_int(cls, v):
         if v is None:  # Allow None values
             return v
@@ -345,7 +326,7 @@ class UserUsageResponse(BaseModel):
     node_name: str
     used_traffic: int
 
-    @field_validator("used_traffic",  mode='before')
+    @field_validator("used_traffic", mode="before")
     def cast_to_int(cls, v):
         if v is None:  # Allow None values
             return v

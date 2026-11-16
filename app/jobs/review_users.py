@@ -34,8 +34,7 @@ def add_notification_reminders(db: Session, user: User, now: datetime | None = N
             if usage_percent >= percent:
                 if not get_notification_reminder(db, user.id, ReminderType.data_usage, threshold=percent):
                     report.data_usage_percent_reached(
-                        db, usage_percent, UserResponse.model_validate(user),
-                        user.id, user.expire, threshold=percent
+                        db, usage_percent, UserResponse.model_validate(user), user.id, user.expire, threshold=percent
                     )
                 break
 
@@ -46,8 +45,7 @@ def add_notification_reminders(db: Session, user: User, now: datetime | None = N
             if expire_days <= days_left:
                 if not get_notification_reminder(db, user.id, ReminderType.expiration_date, threshold=days_left):
                     report.expire_days_reached(
-                        db, expire_days, UserResponse.model_validate(user),
-                        user.id, user.expire, threshold=days_left
+                        db, expire_days, UserResponse.model_validate(user), user.id, user.expire, threshold=days_left
                     )
                 break
 
@@ -65,16 +63,11 @@ def review():
     now_ts = now.timestamp()
     with GetDB() as db:
         for user in get_users(db, status=UserStatus.active):
-
             limited = user.data_limit and user.used_traffic >= user.data_limit
             expired = user.expire and user.expire <= now_ts
 
             next_plan = user.next_plan
-            if (
-                    next_plan is not None
-                    and (limited or expired)
-                    and (next_plan.fire_on_either or (limited and expired))
-            ):
+            if next_plan is not None and (limited or expired) and (next_plan.fire_on_either or (limited and expired)):
                 reset_user_by_next_report(db, user)
                 continue
 
@@ -90,13 +83,13 @@ def review():
             xray.operations.remove_user(user)
             update_user_status(db, user, status)
 
-            report.status_change(username=user.username, status=status,
-                                 user=UserResponse.model_validate(user), user_admin=user.admin)
+            report.status_change(
+                username=user.username, status=status, user=UserResponse.model_validate(user), user_admin=user.admin
+            )
 
-            logger.info(f"User \"{user.username}\" status changed to {status}")
+            logger.info(f'User "{user.username}" status changed to {status}')
 
         for user in get_users(db, status=UserStatus.on_hold):
-
             if user.edit_at:
                 base_time = datetime.timestamp(user.edit_at)
             else:
@@ -116,12 +109,11 @@ def review():
             update_user_status(db, user, status)
             start_user_expire(db, user)
 
-            report.status_change(username=user.username, status=status,
-                                 user=UserResponse.model_validate(user), user_admin=user.admin)
+            report.status_change(
+                username=user.username, status=status, user=UserResponse.model_validate(user), user_admin=user.admin
+            )
 
-            logger.info(f"User \"{user.username}\" status changed to {status}")
+            logger.info(f'User "{user.username}" status changed to {status}')
 
 
-scheduler.add_job(review, 'interval',
-                  seconds=JOB_REVIEW_USERS_INTERVAL,
-                  coalesce=True, max_instances=1)
+scheduler.add_job(review, "interval", seconds=JOB_REVIEW_USERS_INTERVAL, coalesce=True, max_instances=1)

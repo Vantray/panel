@@ -24,7 +24,7 @@ def core_health_check():
             try:
                 assert node.started
                 node.api.get_sys_stats(timeout=2)
-            except (ConnectionError, xray_exc.XrayError, AssertionError):
+            except ConnectionError, xray_exc.XrayError, AssertionError:
                 if not config:
                     config = xray.config.include_db_users()
                 xray.operations.restart_node(node_id, config)
@@ -61,9 +61,9 @@ def start_core():
     for node_id in node_ids:
         xray.operations.connect_node(node_id, config)
 
-    scheduler.add_job(core_health_check, 'interval',
-                      seconds=JOB_CORE_HEALTH_CHECK_INTERVAL,
-                      coalesce=True, max_instances=1)
+    scheduler.add_job(
+        core_health_check, "interval", seconds=JOB_CORE_HEALTH_CHECK_INTERVAL, coalesce=True, max_instances=1
+    )
 
 
 @on_shutdown

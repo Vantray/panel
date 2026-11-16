@@ -56,4 +56,4 @@ If you have already changed your env variables, and you want to just update the 
 ## Docs
 you can use these docs to find out how to modify template files
 
-[Mihomo Docs](https://wiki.metacubex.one/en/) 
+[Mihomo Docs](https://wiki.metacubex.one/en/)

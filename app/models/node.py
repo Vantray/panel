@@ -25,16 +25,18 @@ class Node(BaseModel):
 
 class NodeCreate(Node):
     add_as_new_host: bool = True
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "DE node",
-            "address": "192.168.1.1",
-            "port": 62050,
-            "api_port": 62051,
-            "add_as_new_host": True,
-            "usage_coefficient": 1
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "DE node",
+                "address": "192.168.1.1",
+                "port": 62050,
+                "api_port": 62051,
+                "add_as_new_host": True,
+                "usage_coefficient": 1,
+            }
         }
-    })
+    )
 
 
 class NodeModify(Node):
@@ -44,16 +46,18 @@ class NodeModify(Node):
     api_port: int | None = Field(None)
     status: NodeStatus | None = Field(None)
     usage_coefficient: float | None = Field(None)
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "DE node",
-            "address": "192.168.1.1",
-            "port": 62050,
-            "api_port": 62051,
-            "status": "disabled",
-            "usage_coefficient": 1.0
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "DE node",
+                "address": "192.168.1.1",
+                "port": 62050,
+                "api_port": 62051,
+                "status": "disabled",
+                "usage_coefficient": 1.0,
+            }
         }
-    })
+    )
 
 
 class NodeResponse(Node):

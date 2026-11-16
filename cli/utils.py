@@ -53,22 +53,14 @@ def get_user(db, username: str) -> User:
     return user
 
 
-def print_table(
-    table: Table,
-    rows: Iterable[Iterable[Any]],
-    console: Console | None = None
-):
+def print_table(table: Table, rows: Iterable[Iterable[Any]], console: Console | None = None):
     for row in rows:
         table.add_row(*row)
 
     (console or rich_console).print(table)
 
 
-def readable_datetime(
-    date_time: datetime | int | None,
-    include_date: bool = True,
-    include_time: bool = True
-):
+def readable_datetime(date_time: datetime | int | None, include_date: bool = True, include_time: bool = True):
     def get_datetime_format():
         dt_format = ""
         if include_date:

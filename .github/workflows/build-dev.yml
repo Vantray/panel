@@ -92,7 +92,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          
+
           retry() {
             for i in 1 2 3 4 5; do
               "$@" && return 0
@@ -101,24 +101,24 @@ jobs:
             done
             return 1
           }
-          
+
           short="${COMMIT::7}"
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
           built="$(date -u '+%Y-%m-%d %H:%M UTC')"
           subject="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT}" --jq '.commit.message' | head -n1)"
-          
+
           cat > notes.md <<EOF
           > ⚠️ **Automatic dev build from the \`main\` branch.** May be unstable, not suitable for production.
-          
+
           | | |
           |---|---|
           | **Build date** | ${built} |
           | **Commit** | [\`${COMMIT}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${COMMIT}) |
           EOF
           sed -i 's/^          //' notes.md
-          
+
           gh release delete dev-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-          
+
           retry gh release create dev-latest --repo "$GITHUB_REPOSITORY" \
             --target "$COMMIT" \
             --title "Dev build ${short}" \

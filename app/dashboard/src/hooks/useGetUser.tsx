@@ -18,7 +18,7 @@ const useGetUser = (): UseGetUserReturn => {
         telegram_id: "",
         username: ""
       }
-    
+
     return {
         userData: data || userDataEmpty,
         getUserIsPending: isLoading,

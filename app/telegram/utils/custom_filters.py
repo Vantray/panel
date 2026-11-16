@@ -6,7 +6,7 @@ from config import TELEGRAM_ADMIN_ID
 
 
 class IsAdminFilter(AdvancedCustomFilter):
-    key = 'is_admin'
+    key = "is_admin"
 
     def check(self, message, text):
         """
@@ -23,7 +23,6 @@ def cb_query_equals(text: str):
 
 def cb_query_startswith(text: str):
     return lambda query: query.data.startswith(text)
-
 
 
 def setup() -> None:

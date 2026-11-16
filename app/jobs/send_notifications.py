@@ -57,8 +57,8 @@ def send_notifications():
 
     notifications_to_send = []
     try:
-        while (notification := queue.popleft()):
-            if (notification.tries > NUMBER_OF_RECURRENT_NOTIFICATIONS):
+        while notification := queue.popleft():
+            if notification.tries > NUMBER_OF_RECURRENT_NOTIFICATIONS:
                 continue
             if notification.send_at > utcnow().timestamp():
                 queue.append(notification)  # add it to the queue again for the next check
@@ -75,7 +75,8 @@ def send_notifications():
                 continue
             notification.tries += 1
             notification.send_at = (  # schedule notification for n seconds later
-                utcnow() + td(seconds=RECURRENT_NOTIFICATIONS_TIMEOUT)).timestamp()
+                utcnow() + td(seconds=RECURRENT_NOTIFICATIONS_TIMEOUT)
+            ).timestamp()
             queue.append(notification)
 
 
@@ -86,13 +87,12 @@ def delete_expired_reminders() -> None:
 
 
 if WEBHOOK_ADDRESS:
+
     @on_shutdown
     def app_shutdown():
         logger.info("Sending pending notifications before shutdown...")
         send_notifications()
 
     logger.info("Send webhook job started")
-    scheduler.add_job(send_notifications, "interval",
-                      seconds=JOB_SEND_NOTIFICATIONS_INTERVAL,
-                      replace_existing=True)
+    scheduler.add_job(send_notifications, "interval", seconds=JOB_SEND_NOTIFICATIONS_INTERVAL, replace_existing=True)
     scheduler.add_job(delete_expired_reminders, "interval", hours=2, start_date=utcnow() + td(minutes=1))

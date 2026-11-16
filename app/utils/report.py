@@ -1,4 +1,3 @@
-
 import contextlib
 
 from app import discord, telegram
@@ -37,7 +36,8 @@ from config import (
 
 
 def status_change(
-        username: str, status: UserStatus, user: UserResponse, user_admin: Admin = None, by: Admin = None) -> None:
+    username: str, status: UserStatus, user: UserResponse, user_admin: Admin = None, by: Admin = None
+) -> None:
     if NOTIFY_STATUS_CHANGE:
         with contextlib.suppress(Exception):
             telegram.report_status_change(username, status, user_admin)
@@ -65,7 +65,7 @@ def user_created(user: UserResponse, user_id: int, by: Admin, user_admin: Admin 
                 proxies=user.proxies,
                 has_next_plan=user.next_plan is not None,
                 data_limit_reset_strategy=user.data_limit_reset_strategy,
-                admin=user_admin
+                admin=user_admin,
             )
         notify(UserCreated(username=user.username, action=Notification.Type.user_created, by=by, user=user))
         with contextlib.suppress(Exception):
@@ -77,7 +77,7 @@ def user_created(user: UserResponse, user_id: int, by: Admin, user_admin: Admin 
                 proxies=user.proxies,
                 has_next_plan=user.next_plan is not None,
                 data_limit_reset_strategy=user.data_limit_reset_strategy,
-                admin=user_admin
+                admin=user_admin,
             )
 
 
@@ -92,7 +92,7 @@ def user_updated(user: UserResponse, by: Admin, user_admin: Admin = None) -> Non
                 by=by.username,
                 has_next_plan=user.next_plan is not None,
                 data_limit_reset_strategy=user.data_limit_reset_strategy,
-                admin=user_admin
+                admin=user_admin,
             )
         notify(UserUpdated(username=user.username, action=Notification.Type.user_updated, by=by, user=user))
         with contextlib.suppress(Exception):
@@ -104,7 +104,7 @@ def user_updated(user: UserResponse, by: Admin, user_admin: Admin = None) -> Non
                 by=by.username,
                 has_next_plan=user.next_plan is not None,
                 data_limit_reset_strategy=user.data_limit_reset_strategy,
-                admin=user_admin
+                admin=user_admin,
             )
 
 
@@ -120,60 +120,41 @@ def user_deleted(username: str, by: Admin, user_admin: Admin = None) -> None:
 def user_data_usage_reset(user: UserResponse, by: Admin, user_admin: Admin = None) -> None:
     if NOTIFY_USER_DATA_USED_RESET:
         with contextlib.suppress(Exception):
-            telegram.report_user_usage_reset(
-                username=user.username,
-                by=by.username,
-                admin=user_admin
-            )
+            telegram.report_user_usage_reset(username=user.username, by=by.username, admin=user_admin)
         notify(UserDataUsageReset(username=user.username, action=Notification.Type.data_usage_reset, by=by, user=user))
         with contextlib.suppress(Exception):
-            discord.report_user_usage_reset(
-                username=user.username,
-                by=by.username,
-                admin=user_admin
-            )
+            discord.report_user_usage_reset(username=user.username, by=by.username, admin=user_admin)
 
 
 def user_data_reset_by_next(user: UserResponse, user_admin: Admin = None) -> None:
     if NOTIFY_USER_DATA_USED_RESET:
         with contextlib.suppress(Exception):
-            telegram.report_user_data_reset_by_next(
-                user=user,
-                admin=user_admin
-            )
+            telegram.report_user_data_reset_by_next(user=user, admin=user_admin)
         notify(UserDataResetByNext(username=user.username, action=Notification.Type.data_reset_by_next, user=user))
         with contextlib.suppress(Exception):
-            discord.report_user_data_reset_by_next(
-                user=user,
-                admin=user_admin
-            )
+            discord.report_user_data_reset_by_next(user=user, admin=user_admin)
 
 
 def user_subscription_revoked(user: UserResponse, by: Admin, user_admin: Admin = None) -> None:
     if NOTIFY_USER_SUB_REVOKED:
         with contextlib.suppress(Exception):
-            telegram.report_user_subscription_revoked(
-                username=user.username,
-                by=by.username,
-                admin=user_admin
+            telegram.report_user_subscription_revoked(username=user.username, by=by.username, admin=user_admin)
+        notify(
+            UserSubscriptionRevoked(
+                username=user.username, action=Notification.Type.subscription_revoked, by=by, user=user
             )
-        notify(UserSubscriptionRevoked(username=user.username,
-               action=Notification.Type.subscription_revoked, by=by, user=user))
+        )
         with contextlib.suppress(Exception):
-            discord.report_user_subscription_revoked(
-                username=user.username,
-                by=by.username,
-                admin=user_admin
-            )
+            discord.report_user_subscription_revoked(username=user.username, by=by.username, admin=user_admin)
 
 
 def data_usage_percent_reached(
-        db: Session,
-        percent: float,
-        user: UserResponse,
-        user_id: int,
-        expire: int | None = None,
-        threshold: int | None = None
+    db: Session,
+    percent: float,
+    user: UserResponse,
+    user_id: int,
+    expire: int | None = None,
+    threshold: int | None = None,
 ) -> None:
     if NOTIFY_IF_DATA_USAGE_PERCENT_REACHED:
         notify(ReachedUsagePercent(username=user.username, user=user, used_percent=percent))
@@ -182,7 +163,7 @@ def data_usage_percent_reached(
             ReminderType.data_usage,
             expires_at=utcfromtimestamp(expire) if expire else None,
             user_id=user_id,
-            threshold=threshold
+            threshold=threshold,
         )
 
 
@@ -190,8 +171,8 @@ def expire_days_reached(db: Session, days: int, user: UserResponse, user_id: int
     notify(ReachedDaysLeft(username=user.username, user=user, days_left=days))
     if NOTIFY_IF_DAYS_LEFT_REACHED:
         create_notification_reminder(
-            db, ReminderType.expiration_date, expires_at=utcfromtimestamp(expire),
-            user_id=user_id, threshold=threshold)
+            db, ReminderType.expiration_date, expires_at=utcfromtimestamp(expire), user_id=user_id, threshold=threshold
+        )
 
 
 def login(username: str, password: str, client_ip: str, success: bool) -> None:
@@ -201,12 +182,12 @@ def login(username: str, password: str, client_ip: str, success: bool) -> None:
                 username=username,
                 password=password,
                 client_ip=client_ip,
-                status="✅ Success" if success else "❌ Failed"
+                status="✅ Success" if success else "❌ Failed",
             )
         with contextlib.suppress(Exception):
             discord.report_login(
                 username=username,
                 password=password,
                 client_ip=client_ip,
-                status="✅ Success" if success else "❌ Failed"
+                status="✅ Success" if success else "❌ Failed",
             )

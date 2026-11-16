@@ -46,8 +46,7 @@ def validate_dates(start: str | datetime | None, end: str | datetime | None) -> 
     """Validate if start and end dates are correct and if end is after start."""
     try:
         if start:
-            start_date = start if isinstance(start, datetime) else datetime.fromisoformat(
-                start).astimezone(UTC)
+            start_date = start if isinstance(start, datetime) else datetime.fromisoformat(start).astimezone(UTC)
         else:
             start_date = datetime.now(UTC) - timedelta(days=30)
         if end:
@@ -70,28 +69,23 @@ def get_user_template(template_id: int, db: Session = Depends(get_db)):
     return dbuser_template
 
 
-def get_validated_sub(
-        token: str,
-        db: Session = Depends(get_db)
-) -> UserResponse:
+def get_validated_sub(token: str, db: Session = Depends(get_db)) -> UserResponse:
     sub = get_subscription_payload(token)
     if not sub:
         raise HTTPException(status_code=404, detail="Not Found")
 
-    dbuser = crud.get_user(db, sub['username'])
-    if not dbuser or dbuser.created_at > sub['created_at']:
+    dbuser = crud.get_user(db, sub["username"])
+    if not dbuser or dbuser.created_at > sub["created_at"]:
         raise HTTPException(status_code=404, detail="Not Found")
 
-    if dbuser.sub_revoked_at and dbuser.sub_revoked_at > sub['created_at']:
+    if dbuser.sub_revoked_at and dbuser.sub_revoked_at > sub["created_at"]:
         raise HTTPException(status_code=404, detail="Not Found")
 
     return dbuser
 
 
 def get_validated_user(
-        username: str,
-        admin: Admin = Depends(Admin.get_current),
-        db: Session = Depends(get_db)
+    username: str, admin: Admin = Depends(Admin.get_current), db: Session = Depends(get_db)
 ) -> UserResponse:
     dbuser = crud.get_user(db, username)
     if not dbuser:
@@ -103,19 +97,15 @@ def get_validated_user(
     return dbuser
 
 
-def get_expired_users_list(db: Session, admin: Admin, expired_after: datetime | None = None,
-                           expired_before: datetime | None = None):
+def get_expired_users_list(
+    db: Session, admin: Admin, expired_after: datetime | None = None, expired_before: datetime | None = None
+):
     expired_before = expired_before or datetime.now(UTC)
     expired_after = expired_after or datetime.min.replace(tzinfo=UTC)
 
     dbadmin = crud.get_admin(db, admin.username)
     dbusers = crud.get_users(
-        db=db,
-        status=[UserStatus.expired, UserStatus.limited],
-        admin=dbadmin if not admin.is_sudo else None
+        db=db, status=[UserStatus.expired, UserStatus.limited], admin=dbadmin if not admin.is_sudo else None
     )
 
-    return [
-        u for u in dbusers
-        if u.expire and expired_after.timestamp() <= u.expire <= expired_before.timestamp()
-    ]
+    return [u for u in dbusers if u.expire and expired_after.timestamp() <= u.expire <= expired_before.timestamp()]
