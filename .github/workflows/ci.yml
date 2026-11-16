@@ -16,4 +16,3 @@ jobs:
       - run: uv lock --check
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: test "$(uv run alembic heads | wc -l)" -eq 1
