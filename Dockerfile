@@ -1,4 +1,5 @@
 ARG XRAY_VERSION=v25.12.8
+ARG NODE_VERSION=24
 ARG PYTHON_VERSION=3.14.10
 ARG UV_VERSION=0.13.6
 
@@ -13,6 +14,20 @@ RUN apk add --no-cache curl unzip
 
 COPY scripts/install-xray.sh /tmp/install-xray.sh
 RUN sh /tmp/install-xray.sh
+
+FROM node:${NODE_VERSION}-alpine AS frontend
+
+RUN corepack enable && corepack prepare pnpm@12 --activate
+
+WORKDIR /app
+
+COPY dashboard ./dashboard
+COPY scripts/build_dashboard.sh ./
+RUN pnpm -C dashboard install --frozen-lockfile --ignore-scripts
+
+ARG VITE_BASE_API
+
+RUN sh build_dashboard.sh
 
 FROM python:${PYTHON_VERSION}-alpine3.24 AS builder
 
@@ -56,6 +71,7 @@ RUN apk add --no-cache \
     tzdata
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=frontend /app/dashboard/dist/ /app/dashboard/dist/
 COPY --from=xray /out/bin/xray /usr/local/bin/xray
 COPY --from=xray /out/share/ /usr/local/share/xray/
 

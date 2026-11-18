@@ -18,7 +18,7 @@ Link related issues here: "Closes #123", "Refs #456".
 ## Affected areas
 
 - [ ] Backend (`app/`)
-- [ ] Dashboard (`app/dashboard/`)
+- [ ] Dashboard (`dashboard/`)
 - [ ] CLI (`cli/`, `vantray-cli.py`)
 - [ ] Xray API / configuration (`xray_api/`)
 - [ ] Database migrations (`alembic`)

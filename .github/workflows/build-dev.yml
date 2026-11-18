@@ -11,6 +11,7 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - "app/**"
+      - "dashboard/**"
       - "xray_api/**"
       - "cli/**"
       - ".github/workflows/build-dev.yml"

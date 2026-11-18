@@ -26,13 +26,19 @@ When starting development on this project, please make sure to create a new bran
 ```
 .
 ├── app                      # Backend code (FastAPI - Python)
-│   └── dashboard            # Frontend code (React - Typescript)
+├── dashboard                # Frontend code (React - Typescript)
 ├── cli                      # CLI code (Typer - Python)
 └── xray_api                 # Client of Xray's gRPC API
 ```
 
 ## Backend
 Backend is built using FastAPI and uses SQLAlchemy as the ORM for database operations. All Pydantic models can be found in the `app/models` directory, while all database-related operations and models are in the `app/db` directory. The migration scripts for the database (Alembic) can be found in the `app/db/migrations` directory.
+
+The backend is configured through environment variables loaded from the `.env` file. Copy the example file and replace the variables as needed:
+
+```bash
+cp .env.example .env
+```
 
 ### Code Style & Pre-commit Hooks
 Linting and formatting are enforced with [ruff](https://docs.astral.sh/ruff/) via [pre-commit](https://pre-commit.com/). After cloning the repo, install the hooks once:
@@ -49,7 +55,21 @@ pre-commit run --all-files
 ```
 
 ## Frontend
-Frontend is pre-built and served by FastAPI from the `app/dashboard/build` directory. To rebuild the frontend, first make sure you have the necessary dependencies installed by running `npm install` in the `app/dashboard` directory. Then, simply remove the `app/dashboard/build` directory and run the Python code again, and it will rebuild the frontend automatically.
+The frontend is a standalone pnpm project in the `dashboard` directory, fully decoupled from the Python backend. FastAPI only serves the pre-built bundle from `dashboard/dist` — the backend never invokes npm/pnpm itself. The bundle is not committed: the Docker image builds it via `build_dashboard.sh` during the image build. To rebuild the frontend locally, run:
+
+```bash
+cd dashboard
+pnpm install
+pnpm build
+```
+
+The frontend reads its config from `dashboard/.env` — copy the example file and replace the variables as needed (e.g. point `VITE_BASE_API` at the backend API before building):
+
+```bash
+cp dashboard/.env.example dashboard/.env
+```
+
+If `dashboard/dist` is missing at startup, the backend logs a warning and serves the API only (or skips the warning in debug mode).
 
 ### Components Library
 Frontend uses `Chakra-UI` as the component library, so please adhere to the Chakra-UI approach when contributing. Strive to create components that are cohesive and serve a single purpose. Keep in mind that readability and maintainability are more important than brevity, so prioritize those factors when writing your code.
@@ -62,13 +82,12 @@ $ PYTHONPATH=$(pwd) typer vantray-cli.py utils docs --name "" --output ./cli/REA
 ```
 
 ## Debug Mode
-To run the project in debug mode with auto-reload, you can set the environment variable `DEBUG` to `true`. then by running the `main.py`, the backend and frontend will run separately on different ports.
+The backend and frontend run as two separate processes. Set `DEBUG=true` and run `main.py` for the backend with auto-reload, then start the Vite dev server separately:
 
-Note that you must first install the necessary npm packages by running npm install inside the app/dashboard directory before running in debug mode.
 ```bash
-cd app/dashboard
-npm install
-cd ../..
+cd dashboard
+pnpm install
+VITE_BASE_API=http://127.0.0.1:8000/api/ pnpm dev
 ```
 
-If you run the project with debug mode off and delete the `app/dashboard/build` directory, the frontend will be rebuilt automatically on the next run. However, no rebuild will occur while inside debug mode."
+Alternatively, copy `dashboard/.env.example` to `dashboard/.env` and set `VITE_BASE_API` there instead of passing it inline. The dev server runs on port 3000 and talks to the backend API on port 8000 (point `VITE_BASE_API` elsewhere if your backend runs on another port).
