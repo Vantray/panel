@@ -11,7 +11,7 @@ ARG XRAY_VERSION
 # hadolint ignore=DL3018
 RUN apk add --no-cache curl unzip
 
-COPY install-xray.sh /tmp/install-xray.sh
+COPY scripts/install-xray.sh /tmp/install-xray.sh
 RUN sh /tmp/install-xray.sh
 
 FROM python:${PYTHON_VERSION}-alpine3.24 AS builder
