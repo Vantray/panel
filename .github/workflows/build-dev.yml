@@ -118,9 +118,9 @@ jobs:
           EOF
           sed -i 's/^          //' notes.md
 
-          gh release delete dev-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release delete dev-build-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
 
-          retry gh release create dev-latest --repo "$GITHUB_REPOSITORY" \
+          retry gh release create dev-build-latest --repo "$GITHUB_REPOSITORY" \
             --target "$COMMIT" \
             --title "Dev build ${short}" \
             --notes-file notes.md \
