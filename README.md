@@ -93,6 +93,12 @@ vantray --help
 
 # Configuration
 
+Copy the example file to `.env` and replace the variables as needed:
+
+```bash
+cp .env.example .env
+```
+
 > Below are the settings that can be configured using environment variables placed in the `.env` file.
 
 | Variable                                 | Description                                                                                                                    |

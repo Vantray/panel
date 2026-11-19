@@ -23,7 +23,7 @@ updates:
           - "patch"
 
   - package-ecosystem: "npm"
-    directory: "/app/dashboard"
+    directory: "/dashboard"
     target-branch: "dev"
     schedule:
       interval: "weekly"

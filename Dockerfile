@@ -1,6 +1,7 @@
+ARG XRAY_VERSION=v25.12.8
+ARG NODE_VERSION=24
 ARG PYTHON_VERSION=3.14.10
 ARG UV_VERSION=0.13.6
-ARG XRAY_VERSION=latest
 
 FROM alpine:3.24 AS xray
 
@@ -11,8 +12,22 @@ ARG XRAY_VERSION
 # hadolint ignore=DL3018
 RUN apk add --no-cache curl unzip
 
-COPY install-xray.sh /tmp/install-xray.sh
+COPY scripts/install-xray.sh /tmp/install-xray.sh
 RUN sh /tmp/install-xray.sh
+
+FROM node:${NODE_VERSION}-alpine AS frontend
+
+RUN corepack enable && corepack prepare pnpm@12 --activate
+
+WORKDIR /app
+
+COPY dashboard ./dashboard
+COPY scripts/build_dashboard.sh ./
+RUN pnpm -C dashboard install --frozen-lockfile --ignore-scripts
+
+ARG VITE_BASE_API
+
+RUN sh build_dashboard.sh
 
 FROM python:${PYTHON_VERSION}-alpine3.24 AS builder
 
@@ -56,6 +71,7 @@ RUN apk add --no-cache \
     tzdata
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=frontend /app/dashboard/dist/ /app/dashboard/dist/
 COPY --from=xray /out/bin/xray /usr/local/bin/xray
 COPY --from=xray /out/share/ /usr/local/share/xray/
 
@@ -64,11 +80,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8
 
-WORKDIR /code
+WORKDIR /app
 
-COPY . /code
+COPY --exclude=dashboard . .
 
-RUN ln -s /code/vantray-cli.py /usr/local/bin/vantray-cli \
-    && chmod +x /code/vantray-cli.py
+RUN ln -s /app/vantray-cli.py /usr/local/bin/vantray-cli \
+    && chmod +x /app/vantray-cli.py
 
 CMD ["sh", "-c", "alembic upgrade head && exec python main.py"]
