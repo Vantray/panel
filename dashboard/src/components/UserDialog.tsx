@@ -43,7 +43,13 @@ import dayjs from "dayjs";
 import { FC, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import ReactDatePicker from "react-datepicker";
-import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  FormProvider,
+  Resolver,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
   ProxyKeys,
@@ -240,7 +246,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
 
   const form = useForm<FormType>({
     defaultValues: getDefaultValues(),
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormType>,
   });
 
   useEffect(
@@ -645,7 +651,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         ? createDateAsUTC(field.value)
                                         : undefined
                                     }
-                                    onChange={(date: Date) => {
+                                    onChange={(date: Date | null) => {
                                       form.setValue(
                                         "on_hold_expire_duration",
                                         null

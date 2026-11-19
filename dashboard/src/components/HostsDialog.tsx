@@ -56,6 +56,7 @@ import { FC, useEffect, useState } from "react";
 import {
   Controller,
   FormProvider,
+  Resolver,
   useFieldArray,
   useForm,
   useFormContext,
@@ -1210,7 +1211,9 @@ export const HostsDialog: FC = () => {
     if (isEditingHosts) fetchHosts();
   }, [isEditingHosts]);
   const form = useForm<z.infer<typeof hostsSchema>>({
-    resolver: zodResolver(hostsSchema),
+    resolver: zodResolver(hostsSchema) as Resolver<
+      z.infer<typeof hostsSchema>
+    >,
   });
 
   useEffect(() => {

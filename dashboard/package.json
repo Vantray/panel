@@ -7,7 +7,7 @@
     "build": "tsc && vite build --assetsDir statics && cp dist/index.html dist/404.html",
     "preview": "vite preview --port 3000",
     "gen:theme-typings": "chakra-cli tokens ./chakra.config.ts",
-    "postinstall": "npm run gen:theme-typings"
+    "postinstall": "pnpm run gen:theme-typings"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.5.5",
@@ -55,7 +55,6 @@
     "@types/lodash.debounce": "^4.0.7",
     "@types/react": "^18.0.17",
     "@types/react-copy-to-clipboard": "^5.0.4",
-    "@types/react-datepicker": "^4.8.0",
     "@types/react-dom": "^18.0.6",
     "@types/react-json-editor-ajrm": "^2.5.3",
     "@types/react-slick": "^0.23.10",
