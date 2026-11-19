@@ -80,11 +80,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8
 
-WORKDIR /code
+WORKDIR /app
 
-COPY . /code
+COPY --exclude=dashboard . .
 
-RUN ln -s /code/vantray-cli.py /usr/local/bin/vantray-cli \
-    && chmod +x /code/vantray-cli.py
+RUN ln -s /app/vantray-cli.py /usr/local/bin/vantray-cli \
+    && chmod +x /app/vantray-cli.py
 
 CMD ["sh", "-c", "alembic upgrade head && exec python main.py"]
