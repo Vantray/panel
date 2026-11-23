@@ -1,102 +1,55 @@
 # DO NOT RUN THIS SCRIPT
 # This supposed to be used for development
 
-
-import io
-import os
-import re
-import sys
-import tarfile
-import tempfile
+import argparse, subprocess, sys, tarfile, tempfile, io, re
 from pathlib import Path
-
 import requests
 
-# Compile proto files from github repository
+ROOT = Path(__file__).resolve().parent
+PKG = f"{ROOT.parent.name}.{ROOT.name}"
 
+def get_version(arg):
+    if arg != "latest":
+        return arg
+    r = requests.get("https://api.github.com/repos/XTLS/xray-core/releases/latest", timeout=30)
+    r.raise_for_status()
+    return r.json()["tag_name"]
 
-def compile_proto_from_source(dist):
-    tmp = tempfile.TemporaryDirectory()
-    tmp_dir = tmp.name
+def download(version, dest):
+    url = f"https://github.com/XTLS/xray-core/archive/refs/tags/{version}.tar.gz"
+    r = requests.get(url, timeout=120)
+    r.raise_for_status()
+    with tarfile.open(fileobj=io.BytesIO(r.content)) as tar:
+        top = tar.getnames()[0]
+        tar.extractall(dest, filter="data")
+    return Path(dest) / top
 
-    # download and extract source
-    print("Getting latest version...")
-    latest = requests.get('https://api.github.com/repos/XTLS/xray-core/releases/latest') \
-        .json() \
-        .get('tag_name')
-    print("Latest version is", latest)
+def compile_proto(src, out):
+    protos = [str(p) for p in src.rglob("*.proto")]
+    if not protos:
+        raise FileNotFoundError("no .proto files")
+    subprocess.run(
+        [sys.executable, "-m", "grpc_tools.protoc", f"-I={src}",
+         f"--python_out={out}", f"--grpc_python_out={out}", *protos],
+        check=True,
+    )
 
-    # version = 'v4.45.2'
-    version = latest
-
-    print("Downloading source", version, "...")
-    download_url = f'https://github.com/XTLS/xray-core/archive/refs/tags/{version}.tar.gz'
-    print("Source downloaded. extracting and compiling...")
-    r = requests.get(download_url, stream=True)
-    io_bytes = io.BytesIO(r.content)
-    tar = tarfile.open(fileobj=io_bytes, mode='r')
-    tar.extractall(tmp_dir)
-    v2ray_dir = os.path.join(tmp_dir, tar.getnames()[0])
-    tar.close()
-    io_bytes.close()
-
-    # find proto files
-    proto_files = ''
-    for root, dirs, files in os.walk(tmp_dir):
-        for file in files:
-            if file.endswith(".proto"):
-                proto_files += ' ' + os.path.join(root, file)
-
-    if not proto_files:
-        raise FileNotFoundError("there's no proto file.")
-
-    command = f'{sys.executable} -m grpc.tools.protoc ' \
-        f'-I={v2ray_dir} ' \
-        f'--python_out={dist} ' \
-        f'--grpc_python_out={dist} ' + proto_files
-
-    os.system(command)
-
-    tmp.cleanup()
-    print("Compile ended.")
-
-
-def fix_proto_imports(dist):
-    curr_dir = Path(__file__).resolve().parent
-    parent_dir = curr_dir.parent
-
-    imports = []
-    for f in os.listdir('.'):
-        if os.path.isdir(f) and not f.startswith('__'):
-            imports.append(f)
-
-    new_imp = f'{parent_dir.name}.{curr_dir.name}.' + '{}'
-
-    for root, dirs, files in os.walk('.'):
-        for file in files:
-            if file == 'compile.py':
-                continue
-
-            if file.endswith(".py"):
-                path = Path(root) / file
-                with open(path, 'r') as pyfile:
-                    content = pyfile.read()
-                    for imp in imports:
-                        for found in re.findall(f'from {imp}', content):
-                            content = content.replace(found, "from " + new_imp.format(imp))
-                        for found in re.findall(rf'import_module\(\'{imp}', content):
-                            content = content.replace(found, "import_module('" + new_imp.format(imp))
-
-                    # Only for v2fly
-                    content = content.replace('\nimport config_pb2', "\nimport " + new_imp.format('config_pb2'))
-
-                with open(path, 'w') as pyfile:
-                    pyfile.write(content)
-
+def fix_imports(out):
+    tops = [d.name for d in out.iterdir() if d.is_dir() and not d.name.startswith("__")]
+    for path in out.rglob("*.py"):
+        if path.name == "compile.py":
+            continue
+        text = path.read_text(encoding="utf-8")
+        for t in tops:
+            text = re.sub(rf"^from {t}\b", f"from {PKG}.{t}", text, flags=re.M)
+            text = text.replace(f"import_module('{t}", f"import_module('{PKG}.{t}")
+        path.write_text(text, encoding="utf-8")
 
 if __name__ == "__main__":
-    print("Compiling source...")
-    compile_proto_from_source('.')
-    print("Fixing imports...")
-    fix_proto_imports('.')
-    print("Done.")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--version", default="latest")
+    args = ap.parse_args()
+    with tempfile.TemporaryDirectory() as tmp:
+        src = download(get_version(args.version), tmp)
+        compile_proto(src, ROOT)
+    fix_imports(ROOT)
