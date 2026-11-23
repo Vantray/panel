@@ -1,16 +1,16 @@
 import grpc
 
-from .base import XRayBase
-from .exceptions import RelatedError
-from .proto.app.proxyman.command import command_pb2, command_pb2_grpc
-from .proto.common.protocol import user_pb2
-from .types.account import Account
-from .types.message import Message, TypedMessage
+from xray_api.base import XRayBase
+from xray_api.exceptions import RelatedError
+from xray_api.proto.app.proxyman.command import command_pb2, command_pb2_grpc
+from xray_api.proto.common.protocol import user_pb2
+from xray_api.types.account import Account
+from xray_api.types.message import Message, TypedMessage
 
 try:
-    from .proto.core import config_pb2 as core_config_pb2
+    from xray_api.proto.core import config_pb2 as core_config_pb2
 except ModuleNotFoundError:
-    from .proto import config_pb2 as core_config_pb2
+    from xray_api.proto import config_pb2 as core_config_pb2
 
 
 class Proxyman(XRayBase):
