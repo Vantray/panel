@@ -55,7 +55,7 @@
   "hostsDialog.fragment.info.attention": "Внимание: на данный момент эта функция поддерживается только в streisand >= 1.6.12 и v2rayNG >= 1.8.16 (пользовательская конфигурация)",
   "hostsDialog.fragment.info.examples": "Например:",
   "hostsDialog.noise": "Шумовой паттерн",
-  "hostsDialog.noise.placeholder": "Настройки фрагмента по шаблону",
+  "hostsDialog.noise.placeholder": "Настройки шума по шаблону",
   "hostsDialog.noise.info": "пакет,задержка (например, rand:10-20,100-200)",
   "hostsDialog.noise.info.attention": "Внимание: на данный момент эта функция поддерживается только в streisand >= 1.6.32 и v2rayNG >= 1.8.39 (пользовательская конфигурация)",
   "hostsDialog.noise.info.examples": "Например:",
