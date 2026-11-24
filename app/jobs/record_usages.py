@@ -18,7 +18,7 @@ from config import (
     JOB_RECORD_USER_USAGES_INTERVAL,
 )
 from xray_api import XRay as XRayAPI
-from xray_api import exc as xray_exc
+from xray_api import exceptions as xray_exc
 
 
 def safe_execute(db: Session, stmt, params=None):

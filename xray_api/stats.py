@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 import grpc
 
-from .base import XRayBase
-from .exceptions import RelatedError
-from .proto.app.stats.command import command_pb2, command_pb2_grpc
+from xray_api.base import XRayBase
+from xray_api.exceptions import RelatedError
+from xray_api.proto.app.stats.command import command_pb2, command_pb2_grpc
 
 
 @dataclass

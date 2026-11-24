@@ -1,254 +1,134 @@
+import { Button, Dropdown, Label, Link } from "@heroui/react";
 import {
-  Box,
-  chakra,
-  HStack,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Text,
-  useColorMode,
-} from "@chakra-ui/react";
-import {
-  ArrowLeftOnRectangleIcon,
+  ArrowLeftEndOnRectangleIcon,
   Bars3Icon,
   ChartPieIcon,
   Cog6ToothIcon,
-  CurrencyDollarIcon,
   DocumentMinusIcon,
   LinkIcon,
   MoonIcon,
   SquaresPlusIcon,
+  StarIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
-import { DONATION_URL, REPO_URL } from "constants/Project";
-import { useDashboard } from "contexts/DashboardContext";
-import differenceInDays from "date-fns/differenceInDays";
-import isValid from "date-fns/isValid";
-import { FC, ReactNode, useState } from "react";
-import GitHubButton from "react-github-btn";
+import { REPO_URL } from "@/constants";
+import useAdmin, { AdminQueryKey } from "@/hooks/useAdmin";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { updateThemeColor } from "utils/themeColor";
+import { useDashboard } from "@/stores/dashboard";
+import { useTheme } from "@/stores/theme";
 import { Language } from "./Language";
-import useGetUser from "hooks/useGetUser";
+import type { FC } from "react";
 
-type HeaderProps = {
-  actions?: ReactNode;
-};
-const iconProps = {
-  baseStyle: {
-    w: 4,
-    h: 4,
-  },
-};
+export const Header: FC = () => {
+  const { admin, isAdminPending, isAdminSuccess } = useAdmin();
+  const isSudo = !isAdminPending && isAdminSuccess && admin.is_sudo;
 
-const DarkIcon = chakra(MoonIcon, iconProps);
-const LightIcon = chakra(SunIcon, iconProps);
-const CoreSettingsIcon = chakra(Cog6ToothIcon, iconProps);
-const SettingsIcon = chakra(Bars3Icon, iconProps);
-const LogoutIcon = chakra(ArrowLeftOnRectangleIcon, iconProps);
-const DonationIcon = chakra(CurrencyDollarIcon, iconProps);
-const HostsIcon = chakra(LinkIcon, iconProps);
-const NodesIcon = chakra(SquaresPlusIcon, iconProps);
-const NodesUsageIcon = chakra(ChartPieIcon, iconProps);
-const ResetUsageIcon = chakra(DocumentMinusIcon, iconProps);
-const NotificationCircle = chakra(Box, {
-  baseStyle: {
-    bg: "yellow.500",
-    w: "2",
-    h: "2",
-    rounded: "full",
-    position: "absolute",
-  },
-});
+  const { onEditingHosts, onResetAllUsage, onEditingNodes, onShowingNodesUsage } = useDashboard();
+  const { colorMode, toggleColorMode } = useTheme();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-const NOTIFICATION_KEY = "vantray-menu-notification";
-
-export const shouldShowDonation = (): boolean => {
-  const date = localStorage.getItem(NOTIFICATION_KEY);
-  if (!date) return true;
-  try {
-    if (date && isValid(parseInt(date))) {
-      if (differenceInDays(new Date(), new Date(parseInt(date))) >= 7)
-        return true;
-      return false;
-    }
-    return true;
-  } catch (err) {
-    return true;
-  }
-};
-
-export const Header: FC<HeaderProps> = ({ actions }) => {
-  const { userData, getUserIsSuccess, getUserIsPending } = useGetUser();
-
-  const isSudo = () => {
-    if (!getUserIsPending && getUserIsSuccess) {
-      return userData.is_sudo;
-    }
-    return false;
+  const logout = () => {
+    queryClient.removeQueries({ queryKey: AdminQueryKey });
+    navigate({ to: "/login" });
   };
 
-  const {
-    onEditingHosts,
-    onResetAllUsage,
-    onEditingNodes,
-    onShowingNodesUsage,
-  } = useDashboard();
-  const { t } = useTranslation();
-  const { colorMode, toggleColorMode } = useColorMode();
-  const [showDonationNotif, setShowDonationNotif] = useState(
-    shouldShowDonation()
-  );
-  const gBtnColor = colorMode === "dark" ? "dark_dimmed" : colorMode;
-
-  const handleOnClose = () => {
-    localStorage.setItem(NOTIFICATION_KEY, new Date().getTime().toString());
-    setShowDonationNotif(false);
+  const menuAction = (key: string) => {
+    switch (key) {
+      case "hosts":
+        onEditingHosts(true);
+        break;
+      case "nodes":
+        onEditingNodes(true);
+        break;
+      case "nodes-usage":
+        onShowingNodesUsage(true);
+        break;
+      case "reset-all":
+        onResetAllUsage(true);
+        break;
+      case "logout":
+        logout();
+        break;
+    }
   };
 
   return (
-    <HStack
-      gap={2}
-      justifyContent="space-between"
-      __css={{
-        "& .menuList": {
-          direction: "ltr",
-        },
-      }}
-      position="relative"
-    >
-      <Text as="h1" fontWeight="semibold" fontSize="2xl">
-        {t("users")}
-      </Text>
-      {showDonationNotif && (
-        <NotificationCircle top="0" right="0" zIndex={9999} />
-      )}
-      <Box overflow="auto" css={{ direction: "rtl" }}>
-        <HStack alignItems="center">
-          <Menu>
-            <MenuButton
-              as={IconButton}
-              size="sm"
-              variant="outline"
-              icon={
+    <div className="relative flex items-center justify-between gap-2">
+      <div className="relative">
+        <h1 className="text-2xl font-semibold">{t("users")}</h1>
+      </div>
+      <div className="flex items-center gap-2">
+        <Dropdown>
+          <Button isIconOnly size="sm" variant="outline" aria-label="settings">
+            <Bars3Icon className="size-4" />
+          </Button>
+          <Dropdown.Popover className="min-w-47.5">
+            <Dropdown.Menu onAction={(key) => menuAction(String(key))}>
+              {isSudo && (
                 <>
-                  <SettingsIcon />
-                </>
-              }
-              position="relative"
-            ></MenuButton>
-            <MenuList minW="170px" zIndex={99999} className="menuList">
-              {isSudo() && (
-                <>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<HostsIcon />}
-                    onClick={onEditingHosts.bind(null, true)}
-                  >
-                    {t("header.hostSettings")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<NodesIcon />}
-                    onClick={onEditingNodes.bind(null, true)}
-                  >
-                    {t("header.nodeSettings")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<NodesUsageIcon />}
-                    onClick={onShowingNodesUsage.bind(null, true)}
-                  >
-                    {t("header.nodesUsage")}
-                  </MenuItem>
-                  <MenuItem
-                    maxW="170px"
-                    fontSize="sm"
-                    icon={<ResetUsageIcon />}
-                    onClick={onResetAllUsage.bind(null, true)}
-                  >
-                    {t("resetAllUsage")}
-                  </MenuItem>
+                  <Dropdown.Item id="hosts" textValue={t("header.hostSettings")}>
+                    <LinkIcon className="size-4 shrink-0 text-muted" />
+                    <Label>{t("header.hostSettings")}</Label>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="nodes" textValue={t("header.nodeSettings")}>
+                    <SquaresPlusIcon className="size-4 shrink-0 text-muted" />
+                    <Label>{t("header.nodeSettings")}</Label>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="nodes-usage" textValue={t("header.nodesUsage")}>
+                    <ChartPieIcon className="size-4 shrink-0 text-muted" />
+                    <Label>{t("header.nodesUsage")}</Label>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="reset-all" textValue={t("resetAllUsage")}>
+                    <DocumentMinusIcon className="size-4 shrink-0 text-muted" />
+                    <Label>{t("resetAllUsage")}</Label>
+                  </Dropdown.Item>
                 </>
               )}
-              <Link to={DONATION_URL} target="_blank">
-                <MenuItem
-                  maxW="170px"
-                  fontSize="sm"
-                  icon={<DonationIcon />}
-                  position="relative"
-                  onClick={handleOnClose}
-                >
-                  {t("header.donation")}{" "}
-                  {showDonationNotif && (
-                    <NotificationCircle top="3" right="2" />
-                  )}
-                </MenuItem>
-              </Link>
-              <Link to="/login">
-                <MenuItem maxW="170px" fontSize="sm" icon={<LogoutIcon />}>
-                  {t("header.logout")}
-                </MenuItem>
-              </Link>
-            </MenuList>
-          </Menu>
+              <Dropdown.Item id="logout" textValue={t("header.logout")}>
+                <ArrowLeftEndOnRectangleIcon className="size-4 shrink-0 text-muted" />
+                <Label>{t("header.logout")}</Label>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
 
-          {isSudo() && (
-            <IconButton
-              size="sm"
-              variant="outline"
-              aria-label="core settings"
-              onClick={() => {
-                useDashboard.setState({ isEditingCore: true });
-              }}
-            >
-              <CoreSettingsIcon />
-            </IconButton>
-          )}
-
-          <Language />
-
-          <IconButton
+        {isSudo && (
+          <Button
+            isIconOnly
             size="sm"
             variant="outline"
-            aria-label="switch theme"
-            onClick={() => {
-              updateThemeColor(colorMode == "dark" ? "light" : "dark");
-              toggleColorMode();
+            aria-label="core settings"
+            onPress={() => {
+              useDashboard.setState({ isEditingCore: true });
             }}
           >
-            {colorMode === "light" ? <DarkIcon /> : <LightIcon />}
-          </IconButton>
+            <Cog6ToothIcon className="size-4" />
+          </Button>
+        )}
 
-          <Box
-            css={{ direction: "ltr" }}
-            display="flex"
-            alignItems="center"
-            pr="2"
-            __css={{
-              "&  span": {
-                display: "inline-flex",
-              },
-            }}
-          >
-            <GitHubButton
-              href={REPO_URL}
-              data-color-scheme={`no-preference: ${gBtnColor}; light: ${gBtnColor}; dark: ${gBtnColor};`}
-              data-size="large"
-              data-show-count="true"
-              aria-label="Star Vantray on GitHub"
-            >
-              Star
-            </GitHubButton>
-          </Box>
-        </HStack>
-      </Box>
-    </HStack>
+        <Language />
+
+        <Button
+          isIconOnly
+          size="sm"
+          variant="outline"
+          aria-label="switch theme"
+          onPress={toggleColorMode}
+        >
+          {colorMode === "light" ? <MoonIcon className="size-4" /> : <SunIcon className="size-4" />}
+        </Button>
+
+        <Link href={REPO_URL} target="_blank">
+          <Button size="sm" variant="outline">
+            <StarIcon className="size-4" />
+            Star
+          </Button>
+        </Link>
+      </div>
+    </div>
   );
 };

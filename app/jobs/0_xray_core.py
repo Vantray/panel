@@ -6,7 +6,7 @@ from app import logger, on_shutdown, on_startup, scheduler, xray
 from app.db import GetDB, crud
 from app.models.node import NodeStatus
 from config import JOB_CORE_HEALTH_CHECK_INTERVAL
-from xray_api import exc as xray_exc
+from xray_api import exceptions as xray_exc
 
 
 def core_health_check():

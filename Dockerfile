@@ -22,12 +22,12 @@ RUN corepack enable && corepack prepare pnpm@12 --activate
 WORKDIR /app
 
 COPY dashboard ./dashboard
-COPY scripts/build_dashboard.sh ./
+COPY scripts/build_dashboard.sh ./scripts/build_dashboard.sh
 RUN pnpm -C dashboard install --frozen-lockfile --ignore-scripts
 
 ARG VITE_BASE_API
 
-RUN sh build_dashboard.sh
+RUN sh scripts/build_dashboard.sh
 
 FROM python:${PYTHON_VERSION}-alpine3.24 AS builder
 

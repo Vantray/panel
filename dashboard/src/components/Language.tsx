@@ -1,72 +1,46 @@
 import {
-  chakra,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-} from "@chakra-ui/react";
+  Dropdown,
+  Button,
+  DropdownPopover,
+  DropdownMenu,
+  DropdownItem,
+  Label,
+} from "@heroui/react";
 import { LanguageIcon } from "@heroicons/react/24/outline";
-import { FC, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-type HeaderProps = {
-  actions?: ReactNode;
-};
+const languages = [
+  { label: "English", value: "en" },
+  { label: "فارسی", value: "fa" },
+  { label: "简体中文", value: "zh-cn" },
+  { label: "Русский", value: "ru" },
+];
 
-const LangIcon = chakra(LanguageIcon, {
-  baseStyle: {
-    w: 4,
-    h: 4,
-  },
-});
-
-export const Language: FC<HeaderProps> = ({ actions }) => {
+export const Language = () => {
   const { i18n } = useTranslation();
 
-  var changeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang);
+  const changeLanguage = (lang: string) => {
+    void i18n.changeLanguage(lang);
   };
 
   return (
-    <Menu placement="bottom-end">
-      <MenuButton
-        as={IconButton}
-        size="sm"
-        variant="outline"
-        icon={<LangIcon />}
-        position="relative"
-      />
-      <MenuList minW="100px" zIndex={9999}>
-        <MenuItem
-          maxW="100px"
-          fontSize="sm"
-          onClick={() => changeLanguage("en")}
+    <Dropdown>
+      <Button isIconOnly size="sm" variant="outline" aria-label="language">
+        <LanguageIcon className="size-4" />
+      </Button>
+      <DropdownPopover className="min-w-30">
+        <DropdownMenu
+          onAction={(key) => changeLanguage(String(key))}
+          selectedKeys={[i18n.language]}
+          selectionMode="single"
         >
-          English
-        </MenuItem>
-        <MenuItem
-          maxW="100px"
-          fontSize="sm"
-          onClick={() => changeLanguage("fa")}
-        >
-          فارسی
-        </MenuItem>
-        <MenuItem
-          maxW="100px"
-          fontSize="sm"
-          onClick={() => changeLanguage("zh-cn")}
-        >
-          简体中文
-        </MenuItem>
-        <MenuItem
-          maxW="100px"
-          fontSize="sm"
-          onClick={() => changeLanguage("ru")}
-        >
-          Русский
-        </MenuItem>
-      </MenuList>
-    </Menu>
+          {languages.map((lang) => (
+            <DropdownItem key={lang.value} id={lang.value} textValue={lang.label}>
+              <Label>{lang.label}</Label>
+            </DropdownItem>
+          ))}
+        </DropdownMenu>
+      </DropdownPopover>
+    </Dropdown>
   );
 };

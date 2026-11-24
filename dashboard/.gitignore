@@ -23,7 +23,7 @@ node_modules
 
 .env
 
-stats.html
+.tanstack
 
 # default vite output
 dist

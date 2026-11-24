@@ -1,4 +1,4 @@
-from ..proto.common.serial.typed_message_pb2 import TypedMessage
+from xray_api.proto.common.serial.typed_message_pb2 import TypedMessage
 
 
 class Message:

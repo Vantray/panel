@@ -39,10 +39,13 @@ class XRayCore:
         if private_key:
             cmd.extend(["-i", private_key])
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
-        m = re.match(r"Private key: (.+)\nPublic key: (.+)", output)
-        if m:
-            private, public = m.groups()
-            return {"private_key": private, "public_key": public}
+
+        private = re.search(r"Private\s?key:\s*(\S+)", output, re.IGNORECASE)
+        public = re.search(r"(?:Password|Public\s?key):\s*(\S+)", output, re.IGNORECASE)
+
+        if private and public:
+            return {"private_key": private.group(1), "public_key": public.group(1)}
+        raise RuntimeError(f"Не удалось разобрать вывод xray x25519:\n{output}")
 
     def __capture_process_logs(self):
         def capture_and_debug_log():
