@@ -1,40 +1,19 @@
 import {
-  Box,
   Button,
-  ButtonGroup,
-  chakra,
-  HStack,
+  Label,
+  ListBox,
   Select,
-  Text,
-} from "@chakra-ui/react";
-import {
-  ArrowLongLeftIcon,
-  ArrowLongRightIcon,
-} from "@heroicons/react/24/outline";
-import { useDashboard } from "contexts/DashboardContext";
-import { ChangeEvent, FC } from "react";
+  SelectIndicator,
+  SelectPopover,
+  SelectTrigger,
+  SelectValue,
+} from "@heroui/react";
+import { ArrowLongLeftIcon, ArrowLongRightIcon } from "@heroicons/react/24/outline";
+import { useDashboard } from "@/stores/dashboard";
+import { setUsersPerPageLimitSize } from "@/lib/userPreference";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { setUsersPerPageLimitSize } from "utils/userPreferenceStorage";
-
-const PrevIcon = chakra(ArrowLongLeftIcon, {
-  baseStyle: {
-    w: 4,
-    h: 4,
-  },
-});
-const NextIcon = chakra(ArrowLongRightIcon, {
-  baseStyle: {
-    w: 4,
-    h: 4,
-  },
-});
-
-export type PaginationType = {
-  count: number;
-  perPage: number;
-  page: number;
-  onChange?: (page: number) => void;
-};
+import { cn } from "@/lib/utils";
 
 const MINIMAL_PAGE_ITEM_COUNT = 5;
 
@@ -45,9 +24,7 @@ const MINIMAL_PAGE_ITEM_COUNT = 5;
  */
 function generatePageItems(total: number, current: number, width: number) {
   if (width < MINIMAL_PAGE_ITEM_COUNT) {
-    throw new Error(
-      `Must allow at least ${MINIMAL_PAGE_ITEM_COUNT} page items`
-    );
+    throw new Error(`Must allow at least ${MINIMAL_PAGE_ITEM_COUNT} page items`);
   }
   if (width % 2 === 0) {
     throw new Error(`Must allow odd number of page items`);
@@ -55,10 +32,7 @@ function generatePageItems(total: number, current: number, width: number) {
   if (total < width) {
     return [...new Array(total).keys()];
   }
-  const left = Math.max(
-    0,
-    Math.min(total - width, current - Math.floor(width / 2))
-  );
+  const left = Math.max(0, Math.min(total - width, current - Math.floor(width / 2)));
   const items: (string | number)[] = new Array(width);
   for (let i = 0; i < width; i += 1) {
     items[i] = i + left;
@@ -89,80 +63,84 @@ export const Pagination: FC = () => {
 
   const changePage = (page: number) => {
     onFilterChange({
-      ...filters,
       offset: page * (perPage as number),
     });
   };
 
-  const handlePageSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    onFilterChange({
-      ...filters,
-      limit: parseInt(e.target.value),
-    });
-    setUsersPerPageLimitSize(e.target.value);
+  const handlePageSizeChange = (value: unknown) => {
+    const limit = parseInt(String(value));
+    onFilterChange({ limit });
+    setUsersPerPageLimitSize(String(limit));
   };
 
   const { t } = useTranslation();
 
   return (
-    <HStack
-      justifyContent="space-between"
-      mt={4}
-      w="full"
-      display="flex"
-      columnGap={{ lg: 4, md: 0 }}
-      rowGap={{ md: 0, base: 4 }}
-      flexDirection={{ md: "row", base: "column" }}
-    >
-      <Box order={{ base: 2, md: 1 }}>
-        <HStack>
-          <Select
-            minW="60px"
-            value={perPage}
-            onChange={handlePageSizeChange}
-            size="sm"
-            rounded="md"
-          >
-            <option>10</option>
-            <option>20</option>
-            <option>30</option>
-          </Select>
-          <Text whiteSpace={"nowrap"} fontSize="sm">
-            {t("itemsPerPage")}
-          </Text>
-        </HStack>
-      </Box>
+    <div className="mt-4 flex flex-col justify-between gap-4 md:flex-row">
+      <div className="order-2 flex items-center gap-2 md:order-1">
+        <Select
+          className="min-w-18"
+          aria-label="page size"
+          value={String(perPage)}
+          onChange={(value) => handlePageSizeChange(value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+            <SelectIndicator />
+          </SelectTrigger>
+          <SelectPopover>
+            <ListBox>
+              {["10", "20", "30"].map((size) => (
+                <ListBox.Item key={size} id={size} textValue={size}>
+                  {size}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </SelectPopover>
+        </Select>
+        <Label className="whitespace-nowrap text-sm font-normal">{t("itemsPerPage")}</Label>
+      </div>
 
-      <ButtonGroup size="sm" isAttached variant="outline" order={{ base: 1, md: 2 }}>
+      <div className="order-1 flex flex-wrap items-center gap-1 md:order-2">
         <Button
-          leftIcon={<PrevIcon />}
-          onClick={changePage.bind(null, page - 1)}
+          size="sm"
+          variant="outline"
+          onPress={() => changePage(page - 1)}
           isDisabled={page === 0 || noPages === 0}
         >
+          <ArrowLongLeftIcon className="size-4" />
           {t("previous")}
         </Button>
         {pages.map((pageIndex) => {
           if (typeof pageIndex === "string")
-            return <Button key={pageIndex}>...</Button>;
+            return (
+              <Button key={pageIndex} size="sm" variant="ghost" isDisabled>
+                ...
+              </Button>
+            );
           return (
             <Button
               key={pageIndex}
-              variant={(pageIndex as number) === page ? "solid" : "outline"}
-              onClick={changePage.bind(null, pageIndex)}
+              size="sm"
+              variant={pageIndex === page ? "primary" : "outline"}
+              className={cn(pageIndex === page && "font-semibold")}
+              onPress={() => changePage(pageIndex)}
             >
-              {(pageIndex as number) + 1}
+              {pageIndex + 1}
             </Button>
           );
         })}
-
         <Button
-          rightIcon={<NextIcon />}
-          onClick={changePage.bind(null, page + 1)}
+          size="sm"
+          variant="outline"
+          onPress={() => changePage(page + 1)}
           isDisabled={page + 1 === noPages || noPages === 0}
         >
           {t("next")}
+          <ArrowLongRightIcon className="size-4" />
         </Button>
-      </ButtonGroup>
-    </HStack>
+      </div>
+    </div>
   );
 };

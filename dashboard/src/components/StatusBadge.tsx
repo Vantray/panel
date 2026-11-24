@@ -1,67 +1,75 @@
-import { Badge, Text } from "@chakra-ui/react";
-
-import { statusColors } from "constants/UserSettings";
-import { FC } from "react";
+import { Chip, ChipLabel } from "@heroui/react";
+import {
+  ClockIcon,
+  ExclamationCircleIcon,
+  NoSymbolIcon,
+  WifiIcon,
+} from "@heroicons/react/24/outline";
+import { userStatusColor } from "@/constants";
+import type { Status } from "@/types";
 import { useTranslation } from "react-i18next";
-import { Status as UserStatusType } from "types/User";
-import { relativeExpiryDate } from "utils/dateFormatter";
+import { relativeExpiryDate } from "@/lib/date";
+import { cn } from "@/lib/utils";
 
-type UserStatusProps = {
+const statusIcons: Record<string, typeof WifiIcon> = {
+  active: WifiIcon,
+  connected: WifiIcon,
+  disabled: NoSymbolIcon,
+  expired: ClockIcon,
+  on_hold: ClockIcon,
+  connecting: ClockIcon,
+  limited: ExclamationCircleIcon,
+  error: ExclamationCircleIcon,
+};
+
+type StatusBadgeProps = {
   expiryDate?: number | null;
-  status: UserStatusType;
+  status: Status;
   compact?: boolean;
   showDetail?: boolean;
   extraText?: string | null;
+  /** i18n key prefix; nodes use `nodeModal.status.*` */
+  i18nPrefix?: string;
 };
-export const StatusBadge: FC<UserStatusProps> = ({
+
+export const StatusBadge = ({
   expiryDate,
-  status: userStatus,
+  status,
   compact = false,
   showDetail = true,
   extraText,
-}) => {
+  i18nPrefix = "status",
+}: StatusBadgeProps) => {
   const { t } = useTranslation();
   const dateInfo = relativeExpiryDate(expiryDate);
-  const Icon = statusColors[userStatus].icon;
+  const Icon = statusIcons[status] ?? WifiIcon;
+  const color = userStatusColor[status]?.chip;
+
   return (
-    <>
-      <Badge
-        colorScheme={statusColors[userStatus].statusColor}
-        rounded="full"
-        display="inline-flex"
-        px={3}
-        py={1}
-        columnGap={compact ? 1 : 2}
-        alignItems="center"
+    // flex row keeps the relative expiry text vertically centered with the chip
+    <div className="flex items-center gap-2">
+      <Chip
+        color={color === "muted" ? undefined : color}
+        className={cn("inline-flex gap-2 rounded-full px-3 py-1", compact && "gap-1")}
       >
-        <Icon w={compact ? 3 : 4} />
+        <Icon className={compact ? "size-3" : "size-4"} />
         {showDetail && (
-          <Text
-            textTransform="capitalize"
-            fontSize={compact ? ".7rem" : ".875rem"}
-            lineHeight={compact ? "1rem" : "1.25rem"}
-            fontWeight="medium"
-            letterSpacing="tighter"
+          <ChipLabel
+            className={cn(
+              "font-medium tracking-tight",
+              compact ? "text-[.7rem] leading-4" : "text-sm",
+            )}
           >
-            {userStatus && t(`status.${userStatus}`)}
+            {status && t(`${i18nPrefix}.${status}`)}
             {extraText && `: ${extraText}`}
-          </Text>
+          </ChipLabel>
         )}
-      </Badge>
+      </Chip>
       {showDetail && expiryDate && (
-        <Text
-          display="inline-block"
-          fontSize="xs"
-          fontWeight="medium"
-          ml="2"
-          color="gray.600"
-          _dark={{
-            color: "gray.400",
-          }}
-        >
+        <span className="text-xs font-medium text-muted">
           {t(dateInfo.status, { time: dateInfo.time })}
-        </Text>
+        </span>
       )}
-    </>
+    </div>
   );
 };

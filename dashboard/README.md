@@ -1,37 +1,45 @@
-# Dashboard UI for vantray
+# Vantray Dashboard
 
 ## Requirements
 
-For development, you will only need Node.js installed on your environement.
-
-### Node
-
-[Node](http://nodejs.org/) is really easy to install & now include [NPM](https://npmjs.org/).
-This project has been developed on the Nodejs v24.22.0 so if you faced any issue during installation that may related to the node version, install Node with version >= v24.22.0.
+Node.js >= v24.22.0 and pnpm >=12.21.0.
 
 ### Configure app
-
-Copy `.env.example` to `.env` and replace the variables as needed, then set the backend api address:
 
 ```bash
 cp .env.example .env
 ```
 
-    VITE_BASE_API=https://somewhere.com/
-
 #### Environment variables
 
-| Name          | Description                                                                          |
-| ------------- | ------------------------------------------------------------------------------------ |
+| Name          | Description                                                                       |
+| ------------- | --------------------------------------------------------------------------------- |
 | VITE_BASE_API | The api url of the deployed backend ([Vantray](https://github.com/vantray/panel)) |
 
 ## Start development server
 
-    pnpm dev
+```bash
+pnpm dev
+```
+
+Run the backend next to it (`DEBUG=true python main.py` from the repo root) and open
+http://localhost:3000.
 
 ## Simple build for production
 
-    pnpm build
+```bash
+pnpm build
+```
+
+Output lands in `dist/` with the same layout the backend expects (`index.html`,
+SPA fallback, hashed assets under `statics/`).
+
+## Checks
+
+```bash
+pnpm lint        # oxlint
+pnpm fmt:check   # oxfmt
+```
 
 ## Contribution
 

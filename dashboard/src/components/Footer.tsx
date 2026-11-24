@@ -1,24 +1,17 @@
-import { BoxProps, HStack, Link, Text } from "@chakra-ui/react";
-import { ORGANIZATION_URL, REPO_URL } from "constants/Project";
-import { useDashboard } from "contexts/DashboardContext";
-import { FC } from "react";
+import { useDashboard } from "@/stores/dashboard";
+import { REPO_URL } from "@/constants";
+import { Link } from "@heroui/react";
 
-export const Footer: FC<BoxProps> = (props) => {
+export const Footer = () => {
   const { version } = useDashboard();
   return (
-    <HStack w="full" py="0" position="relative" {...props}>
-      <Text
-        display="inline-block"
-        flexGrow={1}
-        textAlign="center"
-        color="gray.500"
-        fontSize="xs"
-      >
-        <Link color="blue.400" href={REPO_URL}>
+    <div className="flex w-full items-center py-0">
+      <p className="inline-block grow text-center text-xs text-muted">
+        <Link href={REPO_URL} className="text-accent">
           Vantray
         </Link>
-        {version ? ` (v${version}) `: ""}
-      </Text>
-    </HStack>
+        {version ? ` (v${version}) ` : ""}
+      </p>
+    </div>
   );
 };

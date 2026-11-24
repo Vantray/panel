@@ -1,137 +1,127 @@
 import {
-  BoxProps,
   Button,
-  chakra,
-  Grid,
-  GridItem,
-  HStack,
-  IconButton,
   Input,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
+  ListBox,
+  Select,
+  TextField,
+  SelectTrigger,
+  SelectValue,
+  SelectIndicator,
+  SelectPopover,
   Spinner,
-} from "@chakra-ui/react";
-import {
-  ArrowPathIcon,
-  MagnifyingGlassIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import classNames from "classnames";
-import { useDashboard } from "contexts/DashboardContext";
-import debounce from "lodash.debounce";
-import React, { FC, useState } from "react";
+} from "@heroui/react";
+import { ArrowPathIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useDashboard } from "@/stores/dashboard";
+import { useEffect, useState, type FC } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
-const iconProps = {
-  baseStyle: {
-    w: 4,
-    h: 4,
-  },
-};
+const statusOptions = ["", "active", "on_hold", "disabled", "limited", "expired"];
 
-const SearchIcon = chakra(MagnifyingGlassIcon, iconProps);
-const ClearIcon = chakra(XMarkIcon, iconProps);
-export const ReloadIcon = chakra(ArrowPathIcon, iconProps);
-
-export type FilterProps = {} & BoxProps;
-const setSearchField = debounce((search: string) => {
-  useDashboard.getState().onFilterChange({
-    ...useDashboard.getState().filters,
-    offset: 0,
-    search,
-  });
-}, 300);
-
-export const Filters: FC<FilterProps> = ({ ...props }) => {
-  const { loading, filters, onFilterChange, refetchUsers, onCreateUser } =
-    useDashboard();
+export const Filters: FC = () => {
+  const { loading, filters, onFilterChange, refetchUsers, onCreateUser } = useDashboard();
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setSearchField(e.target.value);
-  };
+  const [search, setSearch] = useState(filters.search ?? "");
+
+  // Debounced search (300ms) driving the users query.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if ((filters.search ?? "") !== search) {
+        onFilterChange({ offset: 0, search });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
   const clear = () => {
     setSearch("");
-    onFilterChange({
-      ...filters,
-      offset: 0,
-      search: "",
-    });
+    onFilterChange({ offset: 0, search: "" });
   };
+
   return (
-    <Grid
+    <div
       id="filters"
-      templateColumns={{
-        lg: "repeat(3, 1fr)",
-        md: "repeat(4, 1fr)",
-        base: "repeat(1, 1fr)",
-      }}
-      position="sticky"
-      top={0}
-      mx="-6"
-      px="6"
-      rowGap={4}
-      gap={{
-        lg: 4,
-        base: 0,
-      }}
-      bg="var(--chakra-colors-chakra-body-bg)"
-      py={4}
-      zIndex="docked"
-      {...props}
+      className="sticky top-0 z-10 -mx-6 grid grid-cols-1 gap-4 bg-background px-6 py-4 md:grid-cols-4"
     >
-      <GridItem colSpan={{ base: 1, md: 2, lg: 1 }} order={{ base: 2, md: 1 }}>
-        <InputGroup>
-          <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
+      <TextField
+        fullWidth
+        className="order-2 col-span-1 md:order-1 md:col-span-2 lg:col-span-1"
+        aria-label={t("search")}
+      >
+        <div className="relative">
+          <MagnifyingGlassIcon className="pointer-events-none absolute inset-s-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <Input
+            className="ps-9 pe-16"
             placeholder={t("search")}
             value={search}
-            borderColor="light-border"
-            onChange={onChange}
+            onChange={(e) => setSearch(e.target.value)}
           />
-
-          <InputRightElement>
-            {loading && <Spinner size="xs" />}
+          <div className="absolute inset-e-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            {loading && <Spinner size="sm" />}
             {filters.search && filters.search.length > 0 && (
-              <IconButton
-                onClick={clear}
+              <Button
+                isIconOnly
+                onPress={clear}
                 aria-label="clear"
-                size="xs"
+                size="sm"
                 variant="ghost"
+                className="size-6 min-w-6 rounded-md"
               >
-                <ClearIcon />
-              </IconButton>
+                <XMarkIcon className="size-3.5" />
+              </Button>
             )}
-          </InputRightElement>
-        </InputGroup>
-      </GridItem>
-      <GridItem colSpan={2} order={{ base: 1, md: 2 }}>
-        <HStack justifyContent="flex-end" alignItems="center" h="full">
-          <IconButton
-            aria-label="refresh users"
-            disabled={loading}
-            onClick={refetchUsers}
-            size="sm"
-            variant="outline"
-          >
-            <ReloadIcon
-              className={classNames({
-                "animate-spin": loading,
-              })}
-            />
-          </IconButton>
-          <Button
-            colorScheme="primary"
-            size="sm"
-            onClick={() => onCreateUser(true)}
-            px={5}
-          >
-            {t("createUser")}
-          </Button>
-        </HStack>
-      </GridItem>
-    </Grid>
+          </div>
+        </div>
+      </TextField>
+
+      <Select
+        className="order-1 col-span-1 md:order-3"
+        aria-label={t("usersTable.status")}
+        placeholder={t("usersTable.status")}
+        value={filters.status ?? ""}
+        onChange={(value) =>
+          onFilterChange({
+            status: (String(value) || undefined) as
+              "active" | "disabled" | "limited" | "expired" | "on_hold" | undefined,
+          })
+        }
+      >
+        <SelectTrigger>
+          <SelectValue />
+          <SelectIndicator />
+        </SelectTrigger>
+        <SelectPopover>
+          <ListBox>
+            {statusOptions.map((status) => (
+              <ListBox.Item
+                key={status || "all"}
+                id={status}
+                textValue={status ? t(`status.${status}`) : t("usersTable.all")}
+              >
+                {status ? t(`status.${status}`) : t("usersTable.all")}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </SelectPopover>
+      </Select>
+
+      <div className="order-3 col-span-1 flex items-center justify-end gap-2 md:order-2 md:col-span-2 lg:col-span-2">
+        <Button
+          isIconOnly
+          aria-label="refresh users"
+          isDisabled={loading}
+          onPress={() => refetchUsers()}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowPathIcon className={cn("size-4", loading && "animate-spin")} />
+        </Button>
+        <Button onPress={() => onCreateUser(true)} size="sm" className="px-5">
+          {t("createUser")}
+        </Button>
+      </div>
+    </div>
   );
 };

@@ -2,37 +2,47 @@
   "log": {
     "loglevel": "warning"
   },
-  "routing": {
-    "rules": [
-      {
-        "ip": [
-          "geoip:private"
-        ],
-        "outboundTag": "BLOCK",
-        "type": "field"
-      }
-    ]
-  },
   "inbounds": [
     {
-      "tag": "Shadowsocks TCP",
+      "tag": "vless",
       "listen": "0.0.0.0",
-      "port": 1080,
-      "protocol": "shadowsocks",
+      "port": 4439,
+      "protocol": "vless",
       "settings": {
-        "clients": [],
-        "network": "tcp,udp"
+        "clients": [
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "CBNTa7CG-3AAv4t1dFZ8F7YCpu8NRa0DRNgVkEskH3g",
+          "shortIds": [
+            "9acae4cd8e6292fa"
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"]
       }
     }
   ],
   "outbounds": [
     {
       "protocol": "freedom",
-      "tag": "DIRECT"
+      "tag": "direct"
     },
     {
       "protocol": "blackhole",
-      "tag": "BLOCK"
+      "tag": "block"
     }
   ]
 }
