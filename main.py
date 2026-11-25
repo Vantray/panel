@@ -9,15 +9,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
 from app import app, logger  # noqa: F401 -- `app` is referenced by string in uvicorn.run("main:app")
-from config import (
-    DEBUG,
-    UVICORN_HOST,
-    UVICORN_PORT,
-    UVICORN_SSL_CA_TYPE,
-    UVICORN_SSL_CERTFILE,
-    UVICORN_SSL_KEYFILE,
-    UVICORN_UDS,
-)
+from app.config import settings
 
 
 def validate_cert_and_key(cert_file_path, key_file_path, ca_type):
@@ -59,24 +51,24 @@ if __name__ == "__main__":
     # multi-workers support isn't implemented yet for APScheduler and XRay module
 
     bind_args = {}
-    if UVICORN_SSL_CA_TYPE not in ["public", "private"]:
-        UVICORN_SSL_CA_TYPE = "public"
+    if settings.uvicorn_ssl_ca_type not in ["public", "private"]:
+        settings.uvicorn_ssl_ca_type = "public"
 
-    if UVICORN_SSL_CERTFILE and UVICORN_SSL_KEYFILE and UVICORN_SSL_CA_TYPE:
-        validate_cert_and_key(UVICORN_SSL_CERTFILE, UVICORN_SSL_KEYFILE, UVICORN_SSL_CA_TYPE)
+    if settings.uvicorn_ssl_certfile and settings.uvicorn_ssl_keyfile and settings.uvicorn_ssl_ca_type:
+        validate_cert_and_key(settings.uvicorn_ssl_certfile, settings.uvicorn_ssl_keyfile, settings.uvicorn_ssl_ca_type)
 
-        bind_args["ssl_certfile"] = UVICORN_SSL_CERTFILE
-        bind_args["ssl_keyfile"] = UVICORN_SSL_KEYFILE
+        bind_args["ssl_certfile"] = settings.uvicorn_ssl_certfile
+        bind_args["ssl_keyfile"] = settings.uvicorn_ssl_keyfile
 
-        if UVICORN_UDS:
-            bind_args["uds"] = UVICORN_UDS
+        if settings.uvicorn_uds:
+            bind_args["uds"] = settings.uvicorn_uds
         else:
-            bind_args["host"] = UVICORN_HOST
-            bind_args["port"] = UVICORN_PORT
+            bind_args["host"] = settings.uvicorn_host
+            bind_args["port"] = settings.uvicorn_port
 
     else:
-        if UVICORN_UDS:
-            bind_args["uds"] = UVICORN_UDS
+        if settings.uvicorn_uds:
+            bind_args["uds"] = settings.uvicorn_uds
         else:
             logger.warning(f"""
 {click.style("IMPORTANT!", blink=True, bold=True, fg="yellow")}
@@ -94,19 +86,23 @@ note that in this case, subscription functionality will not work.
 
 Use the following command:
 
-{click.style(f"ssh -L {UVICORN_PORT}:localhost:{UVICORN_PORT} user@server", italic=True, fg="cyan")}
+{click.style(f"ssh -L {settings.uvicorn_port}:localhost:{settings.uvicorn_port} user@server", italic=True, fg="cyan")}
 
-Then, navigate to {click.style(f"http://127.0.0.1:{UVICORN_PORT}", bold=True)} on your computer.
+Then, navigate to {click.style(f"http://127.0.0.1:{settings.uvicorn_port}", bold=True)} on your computer.
             """)
 
             bind_args["host"] = "127.0.0.1"
-            bind_args["port"] = UVICORN_PORT
+            bind_args["port"] = settings.uvicorn_port
 
-    if DEBUG:
+    if settings.debug:
         bind_args["uds"] = None
         bind_args["host"] = "0.0.0.0"
 
     with contextlib.suppress(FileNotFoundError):  # to prevent error on removing unix sock
         uvicorn.run(
-            "main:app", **bind_args, workers=1, reload=DEBUG, log_level=logging.DEBUG if DEBUG else logging.INFO
+            "main:app",
+            **bind_args,
+            workers=1,
+            reload=settings.debug,
+            log_level=logging.DEBUG if settings.debug else logging.INFO,
         )

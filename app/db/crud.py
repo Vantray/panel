@@ -10,6 +10,7 @@ from sqlalchemy import and_, delete, func, or_
 from sqlalchemy.orm import Query, Session, joinedload
 from sqlalchemy.sql.functions import coalesce
 
+from app.config import settings
 from app.db.models import (
     JWT,
     TLS,
@@ -43,7 +44,6 @@ from app.models.user import (
 )
 from app.models.user_template import UserTemplateCreate, UserTemplateModify
 from app.utils.helpers import calculate_expiration_days, calculate_usage_percent, utcnow
-from config import NOTIFY_DAYS_LEFT, NOTIFY_REACHED_USAGE_PERCENT, USERS_AUTODELETE_DAYS
 
 
 def add_default_host(db: Session, inbound: ProxyInbound):
@@ -366,10 +366,10 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
     """
     excluded_inbounds_tags = user.excluded_inbounds
     proxies = []
-    for proxy_type, settings in user.proxies.items():
+    for proxy_type, _settings in user.proxies.items():
         excluded_inbounds = [get_or_create_inbound(db, tag) for tag in excluded_inbounds_tags[proxy_type]]
         proxies.append(
-            Proxy(type=proxy_type.value, settings=settings.dict(no_obj=True), excluded_inbounds=excluded_inbounds)
+            Proxy(type=proxy_type.value, settings=_settings.dict(no_obj=True), excluded_inbounds=excluded_inbounds)
         )
 
     dbuser = User(
@@ -443,12 +443,12 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     """
     added_proxies: dict[ProxyTypes, Proxy] = {}
     if modify.proxies:
-        for proxy_type, settings in modify.proxies.items():
+        for proxy_type, proxy_settings in modify.proxies.items():
             dbproxy = db.query(Proxy).where(Proxy.user == dbuser, Proxy.type == proxy_type).first()
             if dbproxy:
-                dbproxy.settings = settings.dict(no_obj=True)
+                dbproxy.settings = proxy_settings.dict(no_obj=True)
             else:
-                new_proxy = Proxy(type=proxy_type, settings=settings.dict(no_obj=True))
+                new_proxy = Proxy(type=proxy_type, settings=proxy_settings.dict(no_obj=True))
                 dbuser.proxies.append(new_proxy)
                 added_proxies.update({proxy_type: new_proxy})
         for proxy in dbuser.proxies:
@@ -472,7 +472,7 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
                 if dbuser.status != UserStatus.on_hold:
                     dbuser.status = UserStatus.active
 
-                for percent in sorted(NOTIFY_REACHED_USAGE_PERCENT, reverse=True):
+                for percent in sorted(settings.notify_reached_usage_percent, reverse=True):
                     if not dbuser.data_limit or (
                         calculate_usage_percent(dbuser.used_traffic, dbuser.data_limit) < percent
                     ):
@@ -488,7 +488,7 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
         if dbuser.status in (UserStatus.active, UserStatus.expired):
             if not dbuser.expire or dbuser.expire > utcnow().timestamp():
                 dbuser.status = UserStatus.active
-                for days_left in sorted(NOTIFY_DAYS_LEFT):
+                for days_left in sorted(settings.notify_days_left):
                     if not dbuser.expire or (calculate_expiration_days(dbuser.expire) > days_left):
                         reminder = get_notification_reminder(
                             db, dbuser.id, ReminderType.expiration_date, threshold=days_left
@@ -612,9 +612,9 @@ def revoke_user_sub(db: Session, dbuser: User) -> User:
     dbuser.sub_revoked_at = utcnow()
 
     user = UserResponse.model_validate(dbuser)
-    for proxy_type, settings in user.proxies.copy().items():
-        settings.revoke()
-        user.proxies[proxy_type] = settings
+    for proxy_type, proxy_settings in user.proxies.copy().items():
+        proxy_settings.revoke()
+        user.proxies[proxy_type] = proxy_settings
     dbuser = update_user(db, dbuser, user)
 
     db.commit()
@@ -731,7 +731,7 @@ def autodelete_expired_users(db: Session, include_limited_users: bool = False) -
     """
     target_status = [UserStatus.expired] if not include_limited_users else [UserStatus.expired, UserStatus.limited]
 
-    auto_delete = coalesce(User.auto_delete_in_days, USERS_AUTODELETE_DAYS)
+    auto_delete = coalesce(User.auto_delete_in_days, settings.users_autodelete_days)
 
     query = (
         db.query(

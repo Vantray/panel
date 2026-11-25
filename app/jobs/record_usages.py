@@ -9,14 +9,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
 from app import scheduler, xray
+from app.config import settings
 from app.db import GetDB
 from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
 from app.utils.helpers import utcnow
-from config import (
-    DISABLE_RECORDING_NODE_USAGE,
-    JOB_RECORD_NODE_USAGES_INTERVAL,
-    JOB_RECORD_USER_USAGES_INTERVAL,
-)
 from xray_api import XRay as XRayAPI
 from xray_api import exceptions as xray_exc
 
@@ -184,7 +180,7 @@ def record_user_usages():
             )
             safe_execute(db, admin_update_stmt, admin_data)
 
-    if DISABLE_RECORDING_NODE_USAGE:
+    if settings.disable_recording_node_usage:
         return
 
     for node_id, params in api_params.items():
@@ -215,7 +211,7 @@ def record_node_usages():
         stmt = update(System).values(uplink=System.uplink + total_up, downlink=System.downlink + total_down)
         safe_execute(db, stmt)
 
-    if DISABLE_RECORDING_NODE_USAGE:
+    if settings.disable_recording_node_usage:
         return
 
     for node_id, params in api_params.items():
@@ -223,8 +219,8 @@ def record_node_usages():
 
 
 scheduler.add_job(
-    record_user_usages, "interval", seconds=JOB_RECORD_USER_USAGES_INTERVAL, coalesce=True, max_instances=1
+    record_user_usages, "interval", seconds=settings.job_record_user_usages_interval, coalesce=True, max_instances=1
 )
 scheduler.add_job(
-    record_node_usages, "interval", seconds=JOB_RECORD_NODE_USAGES_INTERVAL, coalesce=True, max_instances=1
+    record_node_usages, "interval", seconds=settings.job_record_node_usages_interval, coalesce=True, max_instances=1
 )

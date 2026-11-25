@@ -16,6 +16,7 @@ from telebot.apihelper import ApiTelegramException
 from telebot.util import extract_arguments, user_link
 
 from app import xray
+from app.config import settings
 from app.db import GetDB, crud
 from app.models.proxy import ProxyTypes
 from app.models.user import (
@@ -38,7 +39,6 @@ from app.telegram.utils.shared import (
 )
 from app.utils.store import MemoryStorage
 from app.utils.system import cpu_usage, memory_usage, readable_size, realtime_bandwidth
-from config import TELEGRAM_DEFAULT_VLESS_FLOW, TELEGRAM_LOGGER_CHANNEL_ID
 
 mem_store = MemoryStorage()
 
@@ -622,7 +622,7 @@ def edit_note_step(message: types.Message):
             parse_mode="html",
             reply_markup=BotKeyboard.user_menu(user_info={"status": user.status, "username": user.username}),
         )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 📝 <b>#Edit_Note #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -632,7 +632,7 @@ def edit_note_step(message: types.Message):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={message.chat.id}">{message.from_user.full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
 
 @bot.callback_query_handler(cb_query_startswith("user:"), is_admin=True)
@@ -821,7 +821,7 @@ def template_charge_command(call: types.CallbackQuery):
                 parse_mode="html",
                 reply_markup=BotKeyboard.user_menu(user_info={"status": "active", "username": user.username}),
             )
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 🔋 <b>#Charged #Reset #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -840,7 +840,7 @@ def template_charge_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={call.from_user.id}">{call.from_user.full_name}</a>"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
         else:
             expire = datetime.fromtimestamp(db_user.expire) if db_user.expire else today
             expire += relativedelta(seconds=template.expire_duration)
@@ -1530,7 +1530,7 @@ def confirm_user_command(call: types.CallbackQuery):
         bot.edit_message_text(
             "✅ User deleted.", call.message.chat.id, call.message.message_id, reply_markup=BotKeyboard.main_menu()
         )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 🗑 <b>#Deleted #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1541,7 +1541,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
     elif data == "suspend":
         username = call.data.split(":")[2]
         with GetDB() as db:
@@ -1555,7 +1555,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=BotKeyboard.user_menu(user_info={"status": "disabled", "username": db_user.username}),
             )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 ❌ <b>#Disabled  #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1563,7 +1563,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
     elif data == "activate":
         username = call.data.split(":")[2]
         with GetDB() as db:
@@ -1577,7 +1577,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=BotKeyboard.user_menu(user_info={"status": "active", "username": db_user.username}),
             )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 ✅ <b>#Activated  #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1585,7 +1585,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
     elif data == "reset_usage":
         username = call.data.split(":")[2]
         with GetDB() as db:
@@ -1601,7 +1601,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=BotKeyboard.user_menu(user_info={"status": user.status, "username": user.username}),
             )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 🔁 <b>#Reset_usage  #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1609,7 +1609,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
     elif data == "restart":
         m = bot.edit_message_text("🔄 Restarting XRay core...", call.message.chat.id, call.message.message_id)
         config = xray.config.include_db_users()
@@ -1674,7 +1674,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="html",
                 reply_markup=BotKeyboard.user_menu(user_info={"status": user.status, "username": user.username}),
             )
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 🔋 <b>#Charged #{data.split("_")[1].title()} #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1694,7 +1694,7 @@ def confirm_user_command(call: types.CallbackQuery):
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>\
 """
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
     elif data == "edit_user":
         if (username := mem_store.get(f"{call.message.chat.id}:username")) is None:
@@ -1722,8 +1722,8 @@ def confirm_user_command(call: types.CallbackQuery):
                 if protocol in inbounds and protocol not in db_user.inbounds:
                     proxies.update(
                         {
-                            protocol: {"flow": TELEGRAM_DEFAULT_VLESS_FLOW}
-                            if TELEGRAM_DEFAULT_VLESS_FLOW and protocol == ProxyTypes.VLESS
+                            protocol: {"flow": settings.telegram_default_vless_flow}
+                            if settings.telegram_default_vless_flow and protocol == ProxyTypes.VLESS
                             else {}
                         }
                     )
@@ -1763,7 +1763,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=BotKeyboard.user_menu({"username": db_user.username, "status": db_user.status}),
             )
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             tag = f'\n➖➖➖➖➖➖➖➖➖ \n<b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>'
             if last_user.data_limit != user.data_limit:
                 text = f"""\
@@ -1773,7 +1773,7 @@ def confirm_user_command(call: types.CallbackQuery):
 <b>Last Traffic Limit :</b> <code>{readable_size(last_user.data_limit) if last_user.data_limit else "Unlimited"}</code>
 <b>New Traffic Limit :</b> <code>{readable_size(user.data_limit) if user.data_limit else "Unlimited"}</code>{tag}"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
             if last_user.expire != user.expire:
                 text = f"""\
 📅 <b>#Expiry_Change #From_Bot</b>
@@ -1784,7 +1784,7 @@ def confirm_user_command(call: types.CallbackQuery):
 <b>New Expire Date :</b> <code>\
 {datetime.fromtimestamp(user.expire).strftime("%H:%M:%S %Y-%m-%d") if user.expire else "Never"}</code>{tag}"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
             if list(last_user.inbounds.values())[0] != list(user.inbounds.values())[0]:
                 text = f"""\
 ⚙️ <b>#Inbounds_Change #From_Bot</b>
@@ -1793,7 +1793,7 @@ def confirm_user_command(call: types.CallbackQuery):
 <b>Last Proxies :</b> <code>{", ".join(list(last_user.inbounds.values())[0])}</code>
 <b>New Proxies :</b> <code>{", ".join(list(user.inbounds.values())[0])}</code>{tag}"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
     elif data == "add_user":
         if mem_store.get(f"{call.message.chat.id}:username") is None:
@@ -1810,7 +1810,11 @@ def confirm_user_command(call: types.CallbackQuery):
             k: v for k, v in mem_store.get(f"{call.message.chat.id}:protocols").items() if v
         }
         original_proxies = {
-            p: ({"flow": TELEGRAM_DEFAULT_VLESS_FLOW} if TELEGRAM_DEFAULT_VLESS_FLOW and p == ProxyTypes.VLESS else {})
+            p: (
+                {"flow": settings.telegram_default_vless_flow}
+                if settings.telegram_default_vless_flow and p == ProxyTypes.VLESS
+                else {}
+            )
             for p in inbounds
         }
 
@@ -1891,7 +1895,7 @@ def confirm_user_command(call: types.CallbackQuery):
             except sqlalchemy.exc.IntegrityError:
                 db.rollback()
                 return bot.answer_callback_query(call.id, "❌ Username already exists.", show_alert=True)
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 🆕 <b>#Created #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1913,7 +1917,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
     elif data in ["delete_expired", "delete_limited"]:
         bot.edit_message_text(
@@ -1948,7 +1952,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=BotKeyboard.main_menu(),
             )
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 🗑 <b>#Delete #{data[7:].title()} #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -1958,7 +1962,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 try:
                     with open(file_name, "rb") as document:
                         bot.send_document(
-                            TELEGRAM_LOGGER_CHANNEL_ID,
+                            settings.telegram_logger_channel_id,
                             document,
                             caption=text,
                             parse_mode="HTML",
@@ -1998,7 +2002,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 "HTML",
                 reply_markup=BotKeyboard.main_menu(),
             )
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 📶 <b>#Traffic_Change #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -2009,7 +2013,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 try:
                     with open(file_name, "rb") as document:
                         bot.send_document(
-                            TELEGRAM_LOGGER_CHANNEL_ID,
+                            settings.telegram_logger_channel_id,
                             document,
                             caption=text,
                             parse_mode="HTML",
@@ -2056,7 +2060,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 "HTML",
                 reply_markup=BotKeyboard.main_menu(),
             )
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 📅 <b>#Expiry_Change #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -2067,7 +2071,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 try:
                     with open(file_name, "rb") as document:
                         bot.send_document(
-                            TELEGRAM_LOGGER_CHANNEL_ID,
+                            settings.telegram_logger_channel_id,
                             document,
                             caption=text,
                             parse_mode="HTML",
@@ -2106,8 +2110,8 @@ def confirm_user_command(call: types.CallbackQuery):
                         if protocol in new_inbounds and protocol not in user.inbounds:
                             proxies.update(
                                 {
-                                    protocol: {"flow": TELEGRAM_DEFAULT_VLESS_FLOW}
-                                    if TELEGRAM_DEFAULT_VLESS_FLOW and protocol == ProxyTypes.VLESS
+                                    protocol: {"flow": settings.telegram_default_vless_flow}
+                                    if settings.telegram_default_vless_flow and protocol == ProxyTypes.VLESS
                                     else {}
                                 }
                             )
@@ -2130,7 +2134,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 reply_markup=BotKeyboard.main_menu(),
             )
 
-            if TELEGRAM_LOGGER_CHANNEL_ID:
+            if settings.telegram_logger_channel_id:
                 text = f"""\
 ✏️ <b>#Modified #Inbound_{data[8:].title()} #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -2138,7 +2142,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
                 with contextlib.suppress(ApiTelegramException):
-                    bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                    bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
     elif data == "revoke_sub":
         username = call.data.split(":")[2]
@@ -2157,7 +2161,7 @@ def confirm_user_command(call: types.CallbackQuery):
                 reply_markup=BotKeyboard.user_menu(user_info={"status": user.status, "username": user.username}),
             )
 
-        if TELEGRAM_LOGGER_CHANNEL_ID:
+        if settings.telegram_logger_channel_id:
             text = f"""\
 🚫 <b>#Revoke_sub #From_Bot</b>
 ➖➖➖➖➖➖➖➖➖
@@ -2165,7 +2169,7 @@ def confirm_user_command(call: types.CallbackQuery):
 ➖➖➖➖➖➖➖➖➖
 <b>By :</b> <a href="tg://user?id={chat_id}">{full_name}</a>"""
             with contextlib.suppress(ApiTelegramException):
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, "HTML")
+                bot.send_message(settings.telegram_logger_channel_id, text, "HTML")
 
 
 @bot.message_handler(commands=["user"], is_admin=True)

@@ -24,13 +24,7 @@ from . import (
 if TYPE_CHECKING:
     from app.models.user import UserResponse
 
-from config import (
-    ACTIVE_STATUS_TEXT,
-    DISABLED_STATUS_TEXT,
-    EXPIRED_STATUS_TEXT,
-    LIMITED_STATUS_TEXT,
-    ONHOLD_STATUS_TEXT,
-)
+from app.config import settings
 
 SERVER_IP = get_public_ip()
 SERVER_IPV6 = get_public_ipv6()
@@ -44,11 +38,11 @@ STATUS_EMOJIS = {
 }
 
 STATUS_TEXTS = {
-    "active": ACTIVE_STATUS_TEXT,
-    "expired": EXPIRED_STATUS_TEXT,
-    "limited": LIMITED_STATUS_TEXT,
-    "disabled": DISABLED_STATUS_TEXT,
-    "on_hold": ONHOLD_STATUS_TEXT,
+    "active": settings.active_status_text,
+    "expired": settings.expired_status_text,
+    "limited": settings.limited_status_text,
+    "disabled": settings.disabled_status_text,
+    "on_hold": settings.onhold_status_text,
 }
 
 

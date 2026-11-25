@@ -2,16 +2,16 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import Depends, HTTPException
 
+from app.config import settings
 from app.db import Session, crud, get_db
 from app.models.admin import Admin, AdminInDB, AdminValidationResult
 from app.models.user import UserResponse, UserStatus
 from app.utils.jwt import get_subscription_payload
-from config import SUDOERS
 
 
 def validate_admin(db: Session, username: str, password: str) -> AdminValidationResult | None:
     """Validate admin credentials with environment variables or database."""
-    if SUDOERS.get(username) == password:
+    if settings.sudoers.get(username) == password:
         return AdminValidationResult(username=username, is_sudo=True)
 
     dbadmin = crud.get_admin(db, username)

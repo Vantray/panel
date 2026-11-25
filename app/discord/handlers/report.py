@@ -4,16 +4,16 @@ import requests
 from telebot.formatting import escape_html
 
 from app import logger
+from app.config import settings
 from app.db.models import User
 from app.models.admin import Admin
 from app.models.user import UserDataLimitResetStrategy
 from app.utils.system import readable_size
-from config import DISCORD_WEBHOOK_URL
 
 
-def send_webhooks(json_data, admin_webhook: str = None):
-    if DISCORD_WEBHOOK_URL:
-        send_webhook(json_data=json_data, webhook=DISCORD_WEBHOOK_URL)
+def send_webhooks(json_data, admin_webhook: str | None = None):
+    if settings.discord_webhook_url:
+        send_webhook(json_data=json_data, webhook=settings.discord_webhook_url)
     if admin_webhook:
         send_webhook(json_data=json_data, webhook=admin_webhook)
 
@@ -29,7 +29,7 @@ def send_webhook(json_data, webhook):
         logger.debug(f"Discord payload delivered successfully, code {result.status_code}.")
 
 
-def report_status_change(username: str, status: str, admin: Admin = None):
+def report_status_change(username: str, status: str, admin: Admin | None = None):
     _status = {
         "active": "**:white_check_mark: Activated**",
         "disabled": "**:x: Disabled**",

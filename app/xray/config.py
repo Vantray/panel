@@ -8,12 +8,12 @@ from pathlib import PosixPath
 import json5
 from sqlalchemy import func
 
+from app.config import settings
 from app.db import GetDB
 from app.db import models as db_models
 from app.models.proxy import ProxyTypes
 from app.models.user import UserStatus
 from app.utils.crypto import get_cert_SANs
-from config import DEBUG, XRAY_EXCLUDE_INBOUND_TAGS, XRAY_FALLBACKS_INBOUND_TAG
 
 
 def merge_dicts(a, b):  # B will override A dictionary key and values
@@ -55,7 +55,7 @@ class XRayConfig(dict):
         self.inbounds = []
         self.inbounds_by_protocol = {}
         self.inbounds_by_tag = {}
-        self._fallbacks_inbound = self.get_inbound(XRAY_FALLBACKS_INBOUND_TAG)
+        self._fallbacks_inbound = self.get_inbound(settings.xray_fallback_inbound_tag)
         self._resolve_inbounds()
 
         self._apply_api()
@@ -124,7 +124,7 @@ class XRayConfig(dict):
             if inbound["protocol"] not in ProxyTypes._value2member_map_:
                 continue
 
-            if inbound["tag"] in XRAY_EXCLUDE_INBOUND_TAGS:
+            if inbound["tag"] in settings.xray_exclude_inbound_tags:
                 continue
 
             if not inbound.get("settings"):
@@ -132,7 +132,7 @@ class XRayConfig(dict):
             if not inbound["settings"].get("clients"):
                 inbound["settings"]["clients"] = []
 
-            settings = {
+            config = {
                 "tag": inbound["tag"],
                 "protocol": inbound["protocol"],
                 "port": None,
@@ -145,40 +145,40 @@ class XRayConfig(dict):
                 "is_fallback": False,
             }
 
-            # port settings
+            # port config
             try:
-                settings["port"] = inbound["port"]
+                config["port"] = inbound["port"]
             except KeyError:
                 if self._fallbacks_inbound:
                     try:
-                        settings["port"] = self._fallbacks_inbound["port"]
-                        settings["is_fallback"] = True
+                        config["port"] = self._fallbacks_inbound["port"]
+                        config["is_fallback"] = True
                     except KeyError:
                         raise ValueError("fallbacks inbound doesn't have port")
 
-            # stream settings
+            # stream config
             if stream := inbound.get("streamSettings"):
                 net = stream.get("network", "tcp")
                 net_settings = stream.get(f"{net}Settings", {})
                 security = stream.get("security")
                 tls_settings = stream.get(f"{security}Settings")
 
-                if settings["is_fallback"] is True:
+                if config["is_fallback"] is True:
                     # probably this is a fallback
                     security = self._fallbacks_inbound.get("streamSettings", {}).get("security")
                     tls_settings = self._fallbacks_inbound.get("streamSettings", {}).get(f"{security}Settings", {})
 
-                settings["network"] = net
+                config["network"] = net
 
                 if security == "tls":
-                    # settings['fp']
-                    # settings['alpn']
-                    settings["tls"] = "tls"
+                    # config['fp']
+                    # config['alpn']
+                    config["tls"] = "tls"
                     for certificate in tls_settings.get("certificates", []):
                         if certificate.get("certificateFile", None):
                             with open(certificate["certificateFile"], "rb") as file:
                                 cert = file.read()
-                                settings["sni"].extend(get_cert_SANs(cert))
+                                config["sni"].extend(get_cert_SANs(cert))
 
                         if certificate.get("certificate", None):
                             cert = certificate["certificate"]
@@ -186,15 +186,15 @@ class XRayConfig(dict):
                                 cert = "\n".join(cert)
                             if isinstance(cert, str):
                                 cert = cert.encode()
-                            settings["sni"].extend(get_cert_SANs(cert))
+                            config["sni"].extend(get_cert_SANs(cert))
 
                 elif security == "reality":
-                    settings["fp"] = "chrome"
-                    settings["tls"] = "reality"
-                    settings["sni"] = tls_settings.get("serverNames", [])
+                    config["fp"] = "chrome"
+                    config["tls"] = "reality"
+                    config["sni"] = tls_settings.get("serverNames", [])
 
                     try:
-                        settings["pbk"] = tls_settings["publicKey"]
+                        config["pbk"] = tls_settings["publicKey"]
                     except KeyError:
                         pvk = tls_settings.get("privateKey")
                         if not pvk:
@@ -204,24 +204,24 @@ class XRayConfig(dict):
                             from app.xray import core
 
                             x25519 = core.get_x25519(pvk)
-                            settings["pbk"] = x25519["public_key"]
+                            config["pbk"] = x25519["public_key"]
                         except ImportError:
                             pass
 
-                        if not settings.get("pbk"):
+                        if not config.get("pbk"):
                             raise ValueError(f"You need to provide publicKey in realitySettings of {inbound['tag']}")
 
                     try:
-                        settings["sids"] = tls_settings.get("shortIds")
-                        settings["sids"][0]  # check if there is any shortIds
+                        config["sids"] = tls_settings.get("shortIds")
+                        config["sids"][0]  # check if there is any shortIds
                     except IndexError, TypeError:
                         raise ValueError(
                             f"You need to define at least one shortID in realitySettings of {inbound['tag']}"
                         )
                     try:
-                        settings["spx"] = tls_settings.get("SpiderX")
+                        config["spx"] = tls_settings.get("SpiderX")
                     except Exception:
-                        settings["spx"] = ""
+                        config["spx"] = ""
 
                 if net in ("tcp", "raw"):
                     header = net_settings.get("header", {})
@@ -229,7 +229,7 @@ class XRayConfig(dict):
                     path = request.get("path")
                     host = request.get("headers", {}).get("Host")
 
-                    settings["header_type"] = header.get("type", "")
+                    config["header_type"] = header.get("type", "")
 
                     if isinstance(path, str) or isinstance(host, str):
                         raise ValueError(
@@ -238,16 +238,16 @@ class XRayConfig(dict):
                         )
 
                     if path and isinstance(path, list):
-                        settings["path"] = path[0]
+                        config["path"] = path[0]
 
                     if host and isinstance(host, list):
-                        settings["host"] = host
+                        config["host"] = host
 
                 elif net == "ws":
                     path = net_settings.get("path", "")
                     host = net_settings.get("host", "") or net_settings.get("headers", {}).get("Host")
 
-                    settings["header_type"] = ""
+                    config["header_type"] = ""
 
                     if isinstance(path, list) or isinstance(host, list):
                         raise ValueError(
@@ -256,70 +256,70 @@ class XRayConfig(dict):
                         )
 
                     if isinstance(path, str):
-                        settings["path"] = path
+                        config["path"] = path
 
                     if isinstance(host, str):
-                        settings["host"] = [host]
+                        config["host"] = [host]
 
-                    settings["heartbeatPeriod"] = net_settings.get("heartbeatPeriod", 0)
+                    config["heartbeatPeriod"] = net_settings.get("heartbeatPeriod", 0)
                 elif net == "grpc" or net == "gun":
-                    settings["header_type"] = ""
-                    settings["path"] = net_settings.get("serviceName", "")
+                    config["header_type"] = ""
+                    config["path"] = net_settings.get("serviceName", "")
                     host = net_settings.get("authority", "")
-                    settings["host"] = [host]
-                    settings["multiMode"] = net_settings.get("multiMode", False)
+                    config["host"] = [host]
+                    config["multiMode"] = net_settings.get("multiMode", False)
 
                 elif net == "quic":
-                    settings["header_type"] = net_settings.get("header", {}).get("type", "")
-                    settings["path"] = net_settings.get("key", "")
-                    settings["host"] = [net_settings.get("security", "")]
+                    config["header_type"] = net_settings.get("header", {}).get("type", "")
+                    config["path"] = net_settings.get("key", "")
+                    config["host"] = [net_settings.get("security", "")]
 
                 elif net == "httpupgrade":
-                    settings["path"] = net_settings.get("path", "")
+                    config["path"] = net_settings.get("path", "")
                     host = net_settings.get("host", "")
-                    settings["host"] = [host]
+                    config["host"] = [host]
 
                 elif net in ("splithttp", "xhttp"):
-                    settings["path"] = net_settings.get("path", "")
+                    config["path"] = net_settings.get("path", "")
                     host = net_settings.get("host", "")
-                    settings["host"] = [host]
-                    settings["scMaxEachPostBytes"] = net_settings.get("scMaxEachPostBytes", 1000000)
-                    settings["scMaxConcurrentPosts"] = net_settings.get("scMaxConcurrentPosts", 100)
-                    settings["scMinPostsIntervalMs"] = net_settings.get("scMinPostsIntervalMs", 30)
-                    settings["xPaddingBytes"] = net_settings.get("xPaddingBytes", "100-1000")
-                    settings["xmux"] = net_settings.get("xmux", {})
-                    settings["mode"] = net_settings.get("mode", "auto")
-                    settings["noGRPCHeader"] = net_settings.get("noGRPCHeader", False)
-                    settings["keepAlivePeriod"] = net_settings.get("keepAlivePeriod", 0)
+                    config["host"] = [host]
+                    config["scMaxEachPostBytes"] = net_settings.get("scMaxEachPostBytes", 1000000)
+                    config["scMaxConcurrentPosts"] = net_settings.get("scMaxConcurrentPosts", 100)
+                    config["scMinPostsIntervalMs"] = net_settings.get("scMinPostsIntervalMs", 30)
+                    config["xPaddingBytes"] = net_settings.get("xPaddingBytes", "100-1000")
+                    config["xmux"] = net_settings.get("xmux", {})
+                    config["mode"] = net_settings.get("mode", "auto")
+                    config["noGRPCHeader"] = net_settings.get("noGRPCHeader", False)
+                    config["keepAlivePeriod"] = net_settings.get("keepAlivePeriod", 0)
 
                 elif net == "kcp":
                     header = net_settings.get("header", {})
 
-                    settings["header_type"] = header.get("type", "")
-                    settings["host"] = header.get("domain", "")
-                    settings["path"] = net_settings.get("seed", "")
+                    config["header_type"] = header.get("type", "")
+                    config["host"] = header.get("domain", "")
+                    config["path"] = net_settings.get("seed", "")
 
                 elif net in ("http", "h2", "h3"):
                     net_settings = stream.get("httpSettings", {})
 
-                    settings["host"] = net_settings.get("host") or net_settings.get("Host", "")
-                    settings["path"] = net_settings.get("path", "")
+                    config["host"] = net_settings.get("host") or net_settings.get("Host", "")
+                    config["path"] = net_settings.get("path", "")
 
                 else:
-                    settings["path"] = net_settings.get("path", "")
+                    config["path"] = net_settings.get("path", "")
                     host = net_settings.get("host", {}) or net_settings.get("Host", {})
                     if host and isinstance(host, str):
-                        settings["host"] = host
+                        config["host"] = host
                     elif host and isinstance(host, list):
-                        settings["host"] = host[0]
+                        config["host"] = host[0]
 
-            self.inbounds.append(settings)
-            self.inbounds_by_tag[inbound["tag"]] = settings
+            self.inbounds.append(config)
+            self.inbounds_by_tag[inbound["tag"]] = config
 
             try:
-                self.inbounds_by_protocol[inbound["protocol"]].append(settings)
+                self.inbounds_by_protocol[inbound["protocol"]].append(config)
             except KeyError:
-                self.inbounds_by_protocol[inbound["protocol"]] = [settings]
+                self.inbounds_by_protocol[inbound["protocol"]] = [config]
 
     def get_inbound(self, tag) -> dict:
         for inbound in self["inbounds"]:
@@ -387,12 +387,12 @@ class XRayConfig(dict):
                     clients = config.get_inbound(inbound["tag"])["settings"]["clients"]
 
                     for row in rows:
-                        user_id, username, settings, excluded_inbound_tags = row
+                        user_id, username, _settings, excluded_inbound_tags = row
 
                         if excluded_inbound_tags and inbound["tag"] in excluded_inbound_tags:
                             continue
 
-                        client = {"email": f"{user_id}.{username}", **settings}
+                        client = {"email": f"{user_id}.{username}", **_settings}
 
                         # XTLS currently only supports transmission methods of TCP and mKCP
                         if client.get("flow") and (
@@ -407,7 +407,7 @@ class XRayConfig(dict):
 
                         clients.append(client)
 
-        if DEBUG:
+        if settings.debug:
             with open("generated_config-debug.json", "w") as f:
                 f.write(config.to_json(indent=4))
 

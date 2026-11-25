@@ -4,22 +4,22 @@ from telebot.apihelper import ApiTelegramException
 from telebot.formatting import escape_html
 
 from app import logger
+from app.config import settings
 from app.db.models import User
 from app.models.admin import Admin
 from app.models.user import UserDataLimitResetStrategy
 from app.telegram import bot
 from app.telegram.utils.keyboard import BotKeyboard
 from app.utils.system import readable_size
-from config import TELEGRAM_ADMIN_ID, TELEGRAM_LOGGER_CHANNEL_ID
 
 
 def report(text: str, chat_id: int = None, parse_mode="html", keyboard=None):
-    if bot and (TELEGRAM_ADMIN_ID or TELEGRAM_LOGGER_CHANNEL_ID):
+    if bot and (settings.telegram_admin_id or settings.telegram_logger_channel_id):
         try:
-            if TELEGRAM_LOGGER_CHANNEL_ID:
-                bot.send_message(TELEGRAM_LOGGER_CHANNEL_ID, text, parse_mode=parse_mode)
+            if settings.telegram_logger_channel_id:
+                bot.send_message(settings.telegram_logger_channel_id, text, parse_mode=parse_mode)
             else:
-                for admin in TELEGRAM_ADMIN_ID:
+                for admin in settings.telegram_admin_id:
                     bot.send_message(admin, text, parse_mode=parse_mode, reply_markup=keyboard)
             if chat_id:
                 bot.send_message(chat_id, text, parse_mode=parse_mode)

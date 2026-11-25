@@ -31,7 +31,6 @@ dependencies = [
     "pytelegrambotapi>=4.37.1",
     "python-dateutil>=4.0.0",
     "python-decouple>=3.8",
-    "python-dotenv>=1.2.4",
     "python-multipart>=0.0.33",
     "pyyaml>=6.0.3",
     "qrcode>=8.2",
@@ -47,6 +46,7 @@ dependencies = [
     "uvicorn>=0.54.0",
     "websocket-client>=1.9.2",
     "websockets>=17.4",
+    "pydantic-settings>=2.16.3",
 ]
 
 [dependency-groups]

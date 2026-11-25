@@ -1,16 +1,14 @@
-from typing import Union
-
 import jinja2
 
+from app.config import settings
 from app.utils.helpers import utcnow
-from config import CUSTOM_TEMPLATES_DIRECTORY
 
 from .filters import CUSTOM_FILTERS
 
 template_directories = ["app/templates"]
-if CUSTOM_TEMPLATES_DIRECTORY:
+if settings.custom_templates_directory:
     # User's templates have priority over default templates
-    template_directories.insert(0, CUSTOM_TEMPLATES_DIRECTORY)
+    template_directories.insert(0, settings.custom_templates_directory)
 
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_directories))
 env.filters.update(CUSTOM_FILTERS)

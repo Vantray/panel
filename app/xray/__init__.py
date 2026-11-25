@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from random import randint
 from typing import TYPE_CHECKING
 
+from app.config import settings
 from app.models.proxy import ProxyHostSecurity
 from app.utils.store import DictStorage
 from app.utils.system import check_port
@@ -9,10 +10,9 @@ from app.xray import operations
 from app.xray.config import XRayConfig
 from app.xray.core import XRayCore
 from app.xray.node import XRayNode
-from config import XRAY_ASSETS_PATH, XRAY_EXECUTABLE_PATH, XRAY_JSON
 from xray_api import XRay as XRayAPI
 
-core = XRayCore(XRAY_EXECUTABLE_PATH, XRAY_ASSETS_PATH)
+core = XRayCore(settings.xray_executable_path, settings.xray_assets_path)
 
 # Search for a free API port
 try:
@@ -20,7 +20,7 @@ try:
         if not check_port(api_port):
             break
 finally:
-    config = XRayConfig(XRAY_JSON, api_port=api_port)
+    config = XRayConfig(settings.xray_json, api_port=api_port)
     del api_port
 
 api = XRayAPI(config.api_host, config.api_port)

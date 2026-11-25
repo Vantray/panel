@@ -7,8 +7,8 @@ from math import ceil
 
 import jwt
 
+from app.config import settings
 from app.utils.helpers import utcfromtimestamp, utcnow
-from config import JWT_ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 @cache
@@ -21,8 +21,8 @@ def get_secret_key():
 
 def create_admin_token(username: str, is_sudo=False) -> str:
     data = {"sub": username, "access": "sudo" if is_sudo else "admin", "iat": utcnow()}
-    if JWT_ACCESS_TOKEN_EXPIRE_MINUTES > 0:
-        expire = utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+    if settings.jwt_access_token_expire_minutes > 0:
+        expire = utcnow() + timedelta(minutes=settings.jwt_access_token_expire_minutes)
         data["exp"] = expire
     encoded_jwt = jwt.encode(data, get_secret_key(), algorithm="HS256")
     return encoded_jwt

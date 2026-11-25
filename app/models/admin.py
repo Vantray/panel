@@ -5,9 +5,9 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from app.config import settings
 from app.db import Session, crud, get_db
 from app.utils.jwt import get_admin_payload
-from config import SUDOERS
 
 # Argon2 for new hashes; bcrypt kept as legacy verifier for existing $2b$ hashes
 pwd_context = PasswordHash((Argon2Hasher(), BcryptHasher()))
@@ -43,7 +43,7 @@ class Admin(BaseModel):
         if not payload:
             return
 
-        if payload["username"] in SUDOERS and payload["is_sudo"] is True:
+        if payload["username"] in settings.sudoers and payload["is_sudo"] is True:
             return cls(username=payload["username"], is_sudo=True)
 
         dbadmin = crud.get_admin(db, payload["username"])

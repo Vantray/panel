@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from config import ALLOWED_ORIGINS, DOCS, XRAY_SUBSCRIPTION_PATH
+from app.config import settings
 
 __version__ = "0.1.0"
 
@@ -48,8 +48,8 @@ app = FastAPI(
     title="VantrayAPI",
     description="Unified GUI Censorship Resistant Solution Powered by Xray",
     version=__version__,
-    docs_url="/docs" if DOCS else None,
-    redoc_url="/redoc" if DOCS else None,
+    docs_url="/docs" if settings.docs else None,
+    redoc_url="/redoc" if settings.docs else None,
     lifespan=lifespan,
 )
 
@@ -58,7 +58,7 @@ logger = logging.getLogger("uvicorn.error")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,8 +82,10 @@ use_route_names_as_operation_ids(app)
 def on_startup():
     paths = [f"{r.path}/" for r in app.routes if hasattr(r, "path")]
     paths.append("/api/")
-    if f"/{XRAY_SUBSCRIPTION_PATH}/" in paths:
-        raise ValueError(f"you can't use /{XRAY_SUBSCRIPTION_PATH}/ as subscription path it reserved for {app.title}")
+    if f"/{settings.xray_subscription_path}/" in paths:
+        raise ValueError(
+            f"you can't use /{settings.xray_subscription_path}/ as subscription path it reserved for {app.title}"
+        )
     scheduler.start()
 
 

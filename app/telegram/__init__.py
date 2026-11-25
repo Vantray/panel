@@ -5,12 +5,12 @@ from threading import Thread
 from telebot import TeleBot, apihelper
 
 from app import app, on_startup
-from config import TELEGRAM_API_TOKEN, TELEGRAM_PROXY_URL
+from app.config import settings
 
 bot = None
-if TELEGRAM_API_TOKEN:
-    apihelper.proxy = {"http": TELEGRAM_PROXY_URL, "https": TELEGRAM_PROXY_URL}
-    bot = TeleBot(TELEGRAM_API_TOKEN)
+if settings.telegram_api_token:
+    apihelper.proxy = {"http": settings.telegram_proxy_url, "https": settings.telegram_proxy_url}
+    bot = TeleBot(settings.telegram_api_token)
 
 handler_names = ["admin", "report", "user"]
 

@@ -6,8 +6,8 @@ from collections import deque
 from contextlib import contextmanager
 
 from app import logger
+from app.config import settings
 from app.xray.config import XRayConfig
-from config import DEBUG
 
 
 class XRayCore:
@@ -73,7 +73,7 @@ class XRayCore:
                 elif not self.process or self.process.poll() is not None:
                     break
 
-        if DEBUG:
+        if settings.debug:
             threading.Thread(target=capture_and_debug_log).start()
         else:
             threading.Thread(target=capture_only).start()

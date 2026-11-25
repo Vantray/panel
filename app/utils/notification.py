@@ -3,10 +3,10 @@ from enum import Enum
 
 from pydantic import BaseModel
 
+from app.config import settings
 from app.models.admin import Admin
 from app.models.user import UserResponse
 from app.utils.helpers import utcnow
-from config import WEBHOOK_ADDRESS
 
 queue = deque()
 
@@ -106,5 +106,5 @@ class UserSubscriptionRevoked(UserNotification):
 
 
 def notify(message: type[Notification]) -> None:
-    if WEBHOOK_ADDRESS:
+    if settings.webhook_address:
         queue.append(message)
