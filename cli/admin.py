@@ -1,11 +1,11 @@
 import typer
-from decouple import UndefinedValueError, config
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
+from app.config import settings
 from app.db import GetDB, crud
 from app.db.models import Admin, User
 from app.models.admin import AdminCreate, AdminPartialModify
@@ -189,17 +189,11 @@ def import_from_env(yes_to_all: bool = typer.Option(False, *utils.FLAGS["yes_to_
       - Creates a sudo admin according to `SUDO_USERNAME` and `SUDO_PASSWORD`.
       - Links any user which doesn't have an `admin_id` to the imported sudo admin.
     """
-    try:
-        username, password = config("SUDO_USERNAME"), config("SUDO_PASSWORD")
-    except UndefinedValueError:
+    username, password = settings.sudo_username, settings.sudo_password.get_secret_value()
+    if not (username and password):
         utils.error(
             "Unable to get SUDO_USERNAME and/or SUDO_PASSWORD.\n"
             "Make sure you have set them in the env file or as environment variables."
-        )
-
-    if not (username and password):
-        utils.error(
-            "Unable to retrieve username and password.\nMake sure both SUDO_USERNAME and SUDO_PASSWORD are set."
         )
 
     with GetDB() as db:
