@@ -7,14 +7,9 @@ from xray_api.proto.common.protocol import user_pb2
 from xray_api.types.account import Account
 from xray_api.types.message import Message, TypedMessage
 
-try:
-    from xray_api.proto.core import config_pb2 as core_config_pb2
-except ModuleNotFoundError:
-    from xray_api.proto import config_pb2 as core_config_pb2
-
 
 class Proxyman(XRayBase):
-    def alter_inbound(self, tag: str, operation: TypedMessage, timeout: int = None) -> bool:
+    def alter_inbound(self, tag: str, operation: TypedMessage, timeout: int | None = None) -> bool:
         stub = command_pb2_grpc.HandlerServiceStub(self._channel)
         try:
             stub.AlterInbound(command_pb2.AlterInboundRequest(tag=tag, operation=operation), timeout=timeout)
@@ -23,7 +18,7 @@ class Proxyman(XRayBase):
         except grpc.RpcError as e:
             raise RelatedError(e)
 
-    def alter_outbound(self, tag: str, operation: TypedMessage, timeout: int = None) -> bool:
+    def alter_outbound(self, tag: str, operation: TypedMessage, timeout: int | None = None) -> bool:
         stub = command_pb2_grpc.HandlerServiceStub(self._channel)
         try:
             stub.AlterInbound(command_pb2.AlterOutboundRequest(tag=tag, operation=operation), timeout=timeout)
@@ -32,7 +27,7 @@ class Proxyman(XRayBase):
         except grpc.RpcError as e:
             raise RelatedError(e)
 
-    def add_inbound_user(self, tag: str, user: Account, timeout: int = None) -> bool:
+    def add_inbound_user(self, tag: str, user: Account, timeout: int | None = None) -> bool:
         return self.alter_inbound(
             tag=tag,
             operation=Message(
@@ -45,7 +40,7 @@ class Proxyman(XRayBase):
                 )
             ), timeout=timeout)
 
-    def remove_inbound_user(self, tag: str, email: str, timeout: int = None) -> bool:
+    def remove_inbound_user(self, tag: str, email: str, timeout: int | None = None) -> bool:
         return self.alter_inbound(
             tag=tag,
             operation=Message(
@@ -54,7 +49,7 @@ class Proxyman(XRayBase):
                 )
             ), timeout=timeout)
 
-    def add_outbound_user(self, tag: str, user: Account, timeout: int = None) -> bool:
+    def add_outbound_user(self, tag: str, user: Account, timeout: int | None = None) -> bool:
         return self.alter_outbound(
             tag=tag,
             operation=Message(
@@ -67,7 +62,7 @@ class Proxyman(XRayBase):
                 )
             ), timeout=timeout)
 
-    def remove_outbound_user(self, tag: str, email: str, timeout: int = None) -> bool:
+    def remove_outbound_user(self, tag: str, email: str, timeout: int | None = None) -> bool:
         return self.alter_outbound(
             tag=tag,
             operation=Message(
