@@ -1,9 +1,13 @@
 import atexit
+import base64
 import re
 import subprocess
 import threading
 from collections import deque
 from contextlib import contextmanager
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
 from app import logger
 from app.config import settings
@@ -34,18 +38,47 @@ class XRayCore:
         if m:
             return m.groups()[0]
 
-    def get_x25519(self, private_key: str = None):
-        cmd = [self.executable_path, "x25519"]
+    def get_x25519(self, private_key: str | None = None) -> dict[str, str]:
         if private_key:
-            cmd.extend(["-i", private_key])
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
+            return {"private_key": private_key, "public_key": self.__public_x25519_from_private_key(private_key)}
 
-        private = re.search(r"Private\s?key:\s*(\S+)", output, re.IGNORECASE)
-        public = re.search(r"(?:Password|Public\s?key):\s*(\S+)", output, re.IGNORECASE)
+        key = X25519PrivateKey.generate()
+        return {
+            "private_key": base64.urlsafe_b64encode(
+                key.private_bytes(
+                    encoding=serialization.Encoding.Raw,
+                    format=serialization.PrivateFormat.Raw,
+                    encryption_algorithm=serialization.NoEncryption(),
+                )
+            )
+            .rstrip(b"=")
+            .decode(),
+            "public_key": self.__public_x25519_from_private_key(
+                base64.urlsafe_b64encode(
+                    key.private_bytes(
+                        encoding=serialization.Encoding.Raw,
+                        format=serialization.PrivateFormat.Raw,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
+                .rstrip(b"=")
+                .decode()
+            ),
+        }
 
-        if private and public:
-            return {"private_key": private.group(1), "public_key": public.group(1)}
-        raise RuntimeError(f"Не удалось разобрать вывод xray x25519:\n{output}")
+    @staticmethod
+    def __public_x25519_from_private_key(private_key: str) -> str:
+        padding = 4 - (len(private_key) % 4)
+        if padding != 4:
+            private_key += "=" * padding
+
+        private_bytes = base64.urlsafe_b64decode(private_key)
+        private_key = X25519PrivateKey.from_private_bytes(private_bytes)
+
+        public_bytes = private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
+        )
+        return base64.urlsafe_b64encode(public_bytes).rstrip(b"=").decode()
 
     def __capture_process_logs(self):
         def capture_and_debug_log():
