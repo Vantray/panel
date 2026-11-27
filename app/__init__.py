@@ -13,7 +13,7 @@ from fastapi.routing import APIRoute
 
 from app.config import settings
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Startup/shutdown handlers collected from submodules at import time and run
 # by the lifespan below (replacement for the deprecated @app.on_event API)
