@@ -93,7 +93,6 @@ const TEMPLATE_VARIABLES: { badge: string; key: string }[] = [
   { badge: "{DATA_LIMIT}", key: "hostsDialog.dataLimit" },
   { badge: "{DAYS_LEFT}", key: "hostsDialog.remainingDays" },
   { badge: "{EXPIRE_DATE}", key: "hostsDialog.expireDate" },
-  { badge: "{JALALI_EXPIRE_DATE}", key: "hostsDialog.jalaliExpireDate" },
   { badge: "{TIME_LEFT}", key: "hostsDialog.remainingTime" },
   { badge: "{STATUS_TEXT}", key: "hostsDialog.statusText" },
   { badge: "{STATUS_EMOJI}", key: "hostsDialog.statusEmoji" },

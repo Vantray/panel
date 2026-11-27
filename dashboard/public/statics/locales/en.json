@@ -63,7 +63,6 @@
   "hostsDialog.host.info": "By default, if a request host is set in the Xray config, this host is used. However, you can set a custom request host here if needed.",
   "hostsDialog.host.multiHost": "To set multiple addresses, separate them with <badge>,</badge> Each time an address is chosen randomly.",
   "hostsDialog.host.wildcard": "Use <badge>*</badge> to generate a random string (works for wildcard domain names)",
-  "hostsDialog.jalaliExpireDate": "Expiry date of the user in solar calendar",
   "hostsDialog.loading": "loading...",
   "hostsDialog.muxEnable": "Enable MUX",
   "hostsDialog.remark.placeholder": "Remark",

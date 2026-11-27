@@ -6,8 +6,6 @@ from datetime import datetime as dt
 from datetime import timedelta
 from typing import TYPE_CHECKING, Literal
 
-from jdatetime import date as jd
-
 from app import xray
 from app.utils.helpers import utcnow
 from app.utils.system import get_public_ip, get_public_ipv6, readable_size
@@ -166,9 +164,6 @@ def setup_format_variables(extra_data: dict) -> dict:
             seconds_left = expire_timestamp - int(utcnow().timestamp())
             expire_datetime = dt.fromtimestamp(expire_timestamp)
             expire_date = expire_datetime.date()
-            jalali_expire_date = jd.fromgregorian(
-                year=expire_date.year, month=expire_date.month, day=expire_date.day
-            ).strftime("%Y-%m-%d")
             if now_ts < expire_timestamp:
                 days_left = (expire_datetime - utcnow()).days + 1
                 time_left = format_time_left(seconds_left)
@@ -180,18 +175,15 @@ def setup_format_variables(extra_data: dict) -> dict:
             days_left = "∞"
             time_left = "∞"
             expire_date = "∞"
-            jalali_expire_date = "∞"
     else:
         if on_hold_expire_duration is not None and on_hold_expire_duration >= 0:
             days_left = timedelta(seconds=on_hold_expire_duration).days
             time_left = format_time_left(on_hold_expire_duration)
             expire_date = "-"
-            jalali_expire_date = "-"
         else:
             days_left = "∞"
             time_left = "∞"
             expire_date = "∞"
-            jalali_expire_date = "∞"
 
     if extra_data.get("data_limit"):
         data_limit = readable_size(extra_data["data_limit"])
@@ -217,7 +209,6 @@ def setup_format_variables(extra_data: dict) -> dict:
             "DATA_LEFT": data_left,
             "DAYS_LEFT": days_left,
             "EXPIRE_DATE": expire_date,
-            "JALALI_EXPIRE_DATE": jalali_expire_date,
             "TIME_LEFT": time_left,
             "STATUS_EMOJI": status_emoji,
             "STATUS_TEXT": status_text,

@@ -63,7 +63,6 @@
   "hostsDialog.host.info": "默认情况下，如果在 Xray 配置中设置了请求主机，则使用该主机。但是，如果需要，您可以在此处设置自定义请求主机。",
   "hostsDialog.host.multiHost": "使用 <badge>,</badge> 作为分隔符设置多个地址，使用时，每次随机选择一个地址。",
   "hostsDialog.host.wildcard": "使用 <badge>*</badge> 生成随机字符串 (在通配符域名中生效)",
-  "hostsDialog.jalaliExpireDate": "用户阳历有效日期",
   "hostsDialog.loading": "加载中...",
   "hostsDialog.muxEnable": "使能够 MUX",
   "hostsDialog.remark.placeholder": "备注",
