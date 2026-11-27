@@ -81,7 +81,6 @@ class VLESSSettings(ProxySettings):
 
 class TrojanSettings(ProxySettings):
     password: str = Field(default_factory=random_password)
-    flow: XTLSFlows = XTLSFlows.NONE
 
     def revoke(self):
         self.password = random_password()

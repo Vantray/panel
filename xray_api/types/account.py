@@ -52,7 +52,6 @@ class VLESSAccount(Account):
 
 class TrojanAccount(Account):
     password: str
-    flow: XTLSFlows = XTLSFlows.NONE
 
     @property
     def message(self):
@@ -63,6 +62,7 @@ class ShadowsocksMethods(Enum):
     AES_128_GCM = 'aes-128-gcm'
     AES_256_GCM = 'aes-256-gcm'
     CHACHA20_POLY1305 = 'chacha20-ietf-poly1305'
+    XCHACHA20_POLY1305 = 'xchacha20-poly1305'
 
 
 class ShadowsocksAccount(Account):
