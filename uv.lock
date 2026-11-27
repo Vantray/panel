@@ -814,6 +814,19 @@ wheels = [
 ]
 
 [[package]]
+name = "mypy-protobuf"
+version = "5.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "protobuf" },
+    { name = "types-protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/87/07/7ffb897eee5c01e816e037f51a6720bf1a0a8c17cca1a2382ae554f43044/mypy_protobuf-5.1.0.tar.gz", hash = "sha256:8493758852a9cdc075a11dbe96c6e37ea2feba5fd5f33ef7442b9a275322a94c", size = 37529, upload-time = "2026-04-28T15:56:40.356Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/ec/5ffcf8f5f53757e01afdece10c664e694ac60d2f17c2036811b85b842a5b/mypy_protobuf-5.1.0-py3-none-any.whl", hash = "sha256:d7031f563f806b8bcd448a3e86768bf0994c0af5b0017b344a4fbbba4191f43c", size = 26313, upload-time = "2026-04-28T15:56:39.096Z" },
+]
+
+[[package]]
 name = "nodeenv"
 version = "1.12.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1391,6 +1404,15 @@ wheels = [
 ]
 
 [[package]]
+name = "types-protobuf"
+version = "7.35.1.20261122"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/01/2b04865447656eeb92eb075e42c221d6a2262aef89ccc2053d556381404a/types_protobuf-7.35.1.20261122.tar.gz", hash = "sha256:705644f0c8618252eacf878047dc649b875eb8f4b7518df336513173334a1976", size = 69901, upload-time = "2026-11-22T08:57:48.005Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/9c/1f3c4f73b50db06a1ec4f1c76d696738d5bbe3c85966abfc3f7ac8bdd83c/types_protobuf-7.35.1.20261122-py3-none-any.whl", hash = "sha256:b4e002599d9d7e8e377dd0faa5e70d133081148a0e370ba920f93c402526ed90", size = 86471, upload-time = "2026-11-22T08:57:46.937Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1470,13 +1492,13 @@ dependencies = [
     { name = "deprecated" },
     { name = "fastapi" },
     { name = "grpcio" },
-    { name = "grpcio-tools" },
     { name = "httptools" },
     { name = "jdatetime" },
     { name = "jinja2" },
     { name = "json5" },
     { name = "markupsafe" },
     { name = "packaging" },
+    { name = "protobuf" },
     { name = "psutil" },
     { name = "pwdlib", extra = ["argon2", "bcrypt"] },
     { name = "pydantic" },
@@ -1507,6 +1529,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "grpcio-tools" },
+    { name = "mypy-protobuf" },
     { name = "poethepoet" },
     { name = "pre-commit" },
     { name = "ruff" },
@@ -1525,13 +1549,13 @@ requires-dist = [
     { name = "deprecated", specifier = ">=3.0.1" },
     { name = "fastapi", specifier = ">=0.162.7" },
     { name = "grpcio", specifier = ">=1.85.3" },
-    { name = "grpcio-tools", specifier = ">=1.85.3" },
     { name = "httptools", specifier = ">=0.9.0" },
     { name = "jdatetime", specifier = ">=6.1.1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "json5", specifier = ">=0.10" },
     { name = "markupsafe", specifier = ">=3.0.4" },
     { name = "packaging", specifier = ">=25.0" },
+    { name = "protobuf", specifier = ">=7.36.2" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "pwdlib", extras = ["argon2", "bcrypt"], specifier = ">=0.3.1" },
     { name = "pydantic", specifier = ">=2.14.3" },
@@ -1562,6 +1586,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "grpcio-tools", specifier = ">=1.85.3" },
+    { name = "mypy-protobuf", specifier = ">=5.1.0" },
     { name = "poethepoet", specifier = ">=0.49.0" },
     { name = "pre-commit", specifier = ">=4.7.0" },
     { name = "ruff", specifier = ">=0.17.5" },

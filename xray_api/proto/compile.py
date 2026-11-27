@@ -2,6 +2,7 @@
 # This supposed to be used for development
 
 import argparse, subprocess, sys, tarfile, tempfile, io, re
+import shutil
 from pathlib import Path
 import requests
 
@@ -28,15 +29,20 @@ def compile_proto(src, out):
     protos = [str(p) for p in src.rglob("*.proto")]
     if not protos:
         raise FileNotFoundError("no .proto files")
+    plugin = shutil.which("protoc-gen-mypy")
+    if plugin is None:
+        raise RuntimeError("protoc-gen-mypy not found — mypy-protobuf not installed")
     subprocess.run(
         [sys.executable, "-m", "grpc_tools.protoc", f"-I={src}",
-         f"--python_out={out}", f"--grpc_python_out={out}", *protos],
+         f"--plugin=protoc-gen-mypy={plugin}",
+         f"--python_out={out}", f"--grpc_python_out={out}",
+         f"--mypy_out={out}", *protos],
         check=True,
     )
 
 def fix_imports(out):
     tops = [d.name for d in out.iterdir() if d.is_dir() and not d.name.startswith("__")]
-    for path in out.rglob("*.py"):
+    for path in [p for pat in ("*.py", "*.pyi") for p in out.rglob(pat)]:
         if path.name == "compile.py":
             continue
         text = path.read_text(encoding="utf-8")
