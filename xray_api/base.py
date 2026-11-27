@@ -1,8 +1,14 @@
 import grpc
 
 
-class XRayBase(object):
-    def __init__(self, address: str, port: int, ssl_cert: str | None = None, ssl_target_name: str | None = None):
+class XRayBase:
+    def __init__(
+            self,
+            address: str,
+            port: int,
+            ssl_cert: str | None = None,
+            ssl_target_name: str | None = None
+    ) -> None:
         self.address = address
         self.port = port
 
